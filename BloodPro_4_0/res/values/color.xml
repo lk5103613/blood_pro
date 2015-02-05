@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="main_bg_color">#00A2EA</color>
+    
+    <color name="wheel_bar_color">#7BEAF8</color>
+    <color name="wheel_circle_color">#FFFFFF</color>
+    <color name="wheel_rim_color">#43B2E6</color>
+    <color name="wheel_text_color">#43B2E6</color>
+    
+    <color name="main_text_color">#FFFFFF</color>
+    
+    <color name="btn_border_color">#BAD0D9</color>
+    <color name="btn_pressed_filled_color">#008AEA</color>
+    <color name="wheel_pressed_color">#D8CDCD</color>
+    
+</resources>
