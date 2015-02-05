@@ -16,5 +16,9 @@
     <string name="look_for_history">查看历史数据</string>
     <string name="blood_pressure_value">000</string>
     <string name="last_detect_time">最近检测 昨天：18:25</string>
+    
+    <!-- Remind -->
+    <string name="remind_ble_must_open">必须打开蓝牙才能继续操作</string>
+    <string name="remind_device_not_support">您的设备不支持蓝牙4.0</string>
 
 </resources>
