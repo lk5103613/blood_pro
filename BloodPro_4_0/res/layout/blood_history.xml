@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+     <android.support.v7.widget.Toolbar
+        android:id="@+id/blood_history_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/main_bg_color" />
+     
+     <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/blood_history_line_chart"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+     <com.github.mikephil.charting.charts.PieChart
+         android:id="@+id/blood_history_pie"
+         android:layout_width="wrap_content"
+         android:layout_height="230dp"
+         />
+
+</LinearLayout>
