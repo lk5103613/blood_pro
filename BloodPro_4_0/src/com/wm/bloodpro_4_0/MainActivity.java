@@ -3,7 +3,12 @@ package com.wm.bloodpro_4_0;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -22,6 +27,8 @@ import com.wm.tools.ProgressWheel;
 public class MainActivity extends Activity {
 	// request code to open bluetooth
 	public static int REQUEST_ENABLE_BT = 1;
+	// request code of connect device
+	public static int REQUEST_GET_DEVICE = 2;
 	
 	@InjectView(R.id.progress_bar)
 	ProgressWheel progress;
@@ -29,8 +36,9 @@ public class MainActivity extends Activity {
 	LinearLayout mResultContent;
 	private Context mContext;
 	private BluetoothAdapter mBluetoothAdapter;
+	private BluetoothDevice mDevice;
 	private int mBackClickTimes = 0;
-
+	
 	@SuppressLint("ClickableViewAccessibility")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +55,6 @@ public class MainActivity extends Activity {
 		}
 		// if the ble is closed, request user to open.
 		requestBluetooth();
-//		showResult();
 	}
 	
 	// check the device support ble or not
@@ -107,20 +114,7 @@ public class MainActivity extends Activity {
 	@OnClick(R.id.img_connect)
 	public void showDeviceList(View v) {
 		Intent intent = new Intent(mContext, DeviceListActivity.class);
-		startActivity(intent);
-	}
-	
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		super.onActivityResult(requestCode, resultCode, data);
-		if(requestCode == REQUEST_ENABLE_BT) {
-			// if user don't open ble, close the app
-			if(resultCode == RESULT_CANCELED) {
-				String remindStr = getResources().getString(R.string.remind_ble_must_open);
-				Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
-				finish();
-			}
-		}
+		startActivityForResult(intent, REQUEST_GET_DEVICE);
 	}
 	
 	@Override
@@ -146,6 +140,49 @@ public class MainActivity extends Activity {
 			finish();
 			System.exit(0);
 		}
+	}
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		if(requestCode == REQUEST_ENABLE_BT) {
+			// if user don't open ble, close the app
+			if(resultCode == RESULT_CANCELED) {
+				String remindStr = getResources().getString(R.string.remind_ble_must_open);
+				Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
+				finish();
+			}
+		}
+		if(requestCode == REQUEST_GET_DEVICE) {
+			if(resultCode == RESULT_OK) {
+				mDevice = data.getExtras().getParcelable(DeviceListActivity.DEVICE);
+				connectToDevice(mDevice);
+			}
+		}
+	}
+
+	private void connectToDevice(BluetoothDevice device) {
+		device.connectGatt(mContext, false, new BluetoothGattCallback() {
+			
+			@Override
+			public void onConnectionStateChange(BluetoothGatt gatt, int status,
+					int newState) {
+				System.out.println(newState);
+				if (newState == BluetoothProfile.STATE_CONNECTED) {
+					System.out.println("connect success!");
+				} else if(newState == BluetoothProfile.STATE_DISCONNECTED) {
+				}
+			}
+			
+			@Override
+			public void onCharacteristicRead(BluetoothGatt gatt,
+					BluetoothGattCharacteristic characteristic, int status) {
+				if (status == BluetoothGatt.GATT_SUCCESS) {
+					
+				}
+			}
+			
+		});
 	}
 	
 }

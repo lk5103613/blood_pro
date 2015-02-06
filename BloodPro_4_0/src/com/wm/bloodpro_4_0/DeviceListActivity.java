@@ -9,6 +9,7 @@ import android.bluetooth.BluetoothAdapter.LeScanCallback;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
@@ -32,6 +33,8 @@ public class DeviceListActivity extends Activity implements OnItemClickListener 
 	ProgressBar mProgressScanning;
 	@InjectView(R.id.lbl_found_device)
 	TextView lblFoundDevice;
+	
+	public static String DEVICE = "device";
 	
 	// after SCAN_PERIOD ms, stop scan.
 	private static final long SCAN_PERIOD = 10000;
@@ -145,6 +148,11 @@ public class DeviceListActivity extends Activity implements OnItemClickListener 
 		if(content.trim().equals(str)) {
 			return;
 		}
+		BluetoothDevice device = mDevices.get(position);
+		Intent resultIntent = new Intent();
+		resultIntent.putExtra(DEVICE, device);
+		setResult(RESULT_OK, resultIntent);
+		finish();
 	}
 	
 }
