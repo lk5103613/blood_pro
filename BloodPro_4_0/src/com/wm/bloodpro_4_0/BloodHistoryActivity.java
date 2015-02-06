@@ -39,9 +39,7 @@ public class BloodHistoryActivity extends ActionBarActivity {
 	private BloodInfo bloodInfo;
 	private DBService dbService;
 	private List<BloodInfo> list;
-
-	private String[] mParties = new String[] { "理想", "正常", "低血压", "高前期", "高血压",
-			"临界高" };
+	private String[] mParties;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -49,28 +47,31 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		setContentView(R.layout.blood_history);
 		ButterKnife.inject(this);
 
-		mToolbar.setTitle("血压统计图");
+		mToolbar.setTitle(getResources().getString(R.string.blood_cartogram));
 		setSupportActionBar(mToolbar);
-		mToolbar.setNavigationContentDescription("血压统计图");
+		mToolbar.setNavigationContentDescription(getResources().getString(
+				R.string.blood_cartogram));
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		mToolbar.setNavigationIcon(R.drawable.ic_action_previous_item);
-		
+
+		mParties = getResources().getStringArray(R.array.result_level);
 		dbService = new DBService(BloodHistoryActivity.this);
 		initvalues();
-		
-		list = dbService.getAllModle();//get all history data
+
+		list = dbService.getAllModle();// get all history data
 
 		initPieChart();// init pie chart
 		initLineChart();// init line chart
 		setLineChartData();// set data entity
 		initPieChartCurt(list.size() - 1);
 	}
-	
+
 	@Override
 	protected void onPause() {
 		super.onPause();
-		if(isFinishing()) {
-			overridePendingTransition(R.anim.scale_fade_in, R.anim.slide_out_to_right);
+		if (isFinishing()) {
+			overridePendingTransition(R.anim.scale_fade_in,
+					R.anim.slide_out_to_right);
 		}
 	}
 
@@ -93,9 +94,10 @@ public class BloodHistoryActivity extends ActionBarActivity {
 
 		// draws the corresponding description value into the slice
 		mPieChart.setDrawXValues(true);
-		mPieChart.setRotationEnabled(true);// enable rotation of the chart by touch
+		mPieChart.setRotationEnabled(true);// enable rotation of the chart by
+											// touch
 		mPieChart.setUsePercentValues(true);// display percentage values
-		mPieChart.setCenterText("理想血压");
+		mPieChart.setCenterText(getResources().getString(R.string.idea_level));
 		mPieChart.setCenterTextSize(20);
 		mPieChart.setEnabled(false);
 		setData(5, 100);
@@ -171,7 +173,7 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		mLineChart.setDragEnabled(true);
 		mLineChart.setSaveEnabled(true);
 		mLineChart.setStartAtZero(false);
-		mLineChart.setScaleMinima(list.size() / 10, 1);//set scale
+		mLineChart.setScaleMinima(list.size() / 10, 1);// set scale
 		mLineChart.setDrawBorder(true);
 		mLineChart.setBorderPositions(new BorderPosition[] {
 				BorderPosition.BOTTOM, BorderPosition.LEFT });
@@ -184,7 +186,8 @@ public class BloodHistoryActivity extends ActionBarActivity {
 			xVals.add(list.get(i).getDate());
 		}
 
-		LineData data = new LineData(xVals);//create chart data object to save x values
+		LineData data = new LineData(xVals);// create chart data object to save
+											// x values
 
 		ArrayList<Entry> shouSuoVals = new ArrayList<Entry>();
 		for (int i = 0; i < list.size(); i++) {
@@ -192,7 +195,8 @@ public class BloodHistoryActivity extends ActionBarActivity {
 					.parseFloat(list.get(i).getShousuo()), i));
 		}
 
-		LineDataSet shouSoSet = new LineDataSet(shouSuoVals, "收缩压 ");
+		LineDataSet shouSoSet = new LineDataSet(shouSuoVals, getResources()
+				.getString(R.string.systolic));
 		shouSoSet.setLineWidth(2.5f);
 		shouSoSet.setCircleSize(3f);
 		shouSoSet.setColor(getResources().getColor(R.color.green));
@@ -207,7 +211,8 @@ public class BloodHistoryActivity extends ActionBarActivity {
 					.getShuzhang()), i));
 		}
 
-		LineDataSet shuZhangSet = new LineDataSet(shuZhangVals, "舒张压 ");
+		LineDataSet shuZhangSet = new LineDataSet(shuZhangVals, getResources()
+				.getString(R.string.diastolic));
 		shuZhangSet.setLineWidth(2.5f);
 		shuZhangSet.setCircleSize(3f);
 		shuZhangSet.setColor(getResources().getColor(R.color.yellow));
@@ -222,7 +227,7 @@ public class BloodHistoryActivity extends ActionBarActivity {
 					.add(new Entry(Float.parseFloat(list.get(i).getXinlv()), i));
 		}
 
-		LineDataSet xinLvSet = new LineDataSet(xinLvVals, "心率");
+		LineDataSet xinLvSet = new LineDataSet(xinLvVals, getResources().getString(R.string.heart_rate));
 		xinLvSet.setLineWidth(2.5f);
 		xinLvSet.setCircleSize(3f);
 		xinLvSet.setColor(getResources().getColor(R.color.sky_blue));
@@ -261,7 +266,7 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		int j = 0;
 		int shousuoValue = Integer.parseInt(bloodIn.getShousuo());
 		int shuzhangValue = Integer.parseInt(bloodIn.getShuzhang());
-		mPieChart.setCenterText("理想血压");
+		mPieChart.setCenterText(getResources().getString(R.string.idea_level));
 
 		if (90 < shousuoValue && shousuoValue < 120 && 60 < shuzhangValue
 				&& shuzhangValue <= 80) {// 理想血压
@@ -269,21 +274,21 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		} else if (100 < shousuoValue && shousuoValue < 130
 				&& 60 < shuzhangValue && shuzhangValue < 90) {// 正常血压
 			j = 1;
-			mPieChart.setCenterText("正常血压");
+			mPieChart.setCenterText(getResources().getString(R.string.normal_level));
 		} else if (129 < shousuoValue && shousuoValue < 140
 				|| 84 < shuzhangValue && shuzhangValue < 90) {// 高血压前期
 			j = 3;
-			mPieChart.setCenterText("高血压前期");
+			mPieChart.setCenterText(getResources().getString(R.string.before_high_pressure));
 		} else if (140 < shousuoValue && 90 < shuzhangValue) {// 高血压
 			j = 4;
-			mPieChart.setCenterText("高血压");
+			mPieChart.setCenterText(getResources().getString(R.string.high_pressure));
 		} else if (shousuoValue <= 90 && shuzhangValue <= 60) {// 低血压
 			j = 2;
-			mPieChart.setCenterText("低血压");
+			mPieChart.setCenterText(getResources().getString(R.string.low_pressure));
 		} else if (140 < shousuoValue && shousuoValue < 160
 				&& 90 < shuzhangValue && shuzhangValue < 95) {// 临界高血压
 			j = 5;
-			mPieChart.setCenterText("临界高血压");
+			mPieChart.setCenterText(getResources().getString(R.string.pre_high_pressure));
 		}
 		mPieChart.highlightValue(j, 0);
 	}
@@ -300,7 +305,7 @@ public class BloodHistoryActivity extends ActionBarActivity {
 					BloodHistoryActivity.this,
 					"舒张压:" + list.get(e.getXIndex()).getShuzhang() + "   收缩压 :"
 							+ list.get(e.getXIndex()).getShousuo() + "   心率:"
-							+ list.get(e.getXIndex()).getXinlv(), 3000).show();
+							+ list.get(e.getXIndex()).getXinlv(), Toast.LENGTH_LONG).show();
 			initPieChartCurt(e.getXIndex());
 		}
 
