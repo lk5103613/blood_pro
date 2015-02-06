@@ -47,7 +47,7 @@ public class MainActivity extends Activity {
 		}
 		// if the ble is closed, request user to open.
 		requestBluetooth();
-		showResult();
+//		showResult();
 	}
 	
 	// check the device support ble or not
