@@ -65,6 +65,14 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		setLineChartData();// set data entity
 		initPieChartCurt(list.size() - 1);
 	}
+	
+	@Override
+	protected void onPause() {
+		super.onPause();
+		if(isFinishing()) {
+			overridePendingTransition(R.anim.scale_fade_in, R.anim.slide_out_to_right);
+		}
+	}
 
 	private void initPieChart() {
 		mPieChart.setHoleColor(Color.rgb(235, 235, 235));
