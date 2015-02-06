@@ -18,4 +18,12 @@
     <color name="btn_pressed_filled_color">#008AEA</color>
     <color name="wheel_pressed_color">#D8CDCD</color>
     
+    <color name="toolbarTextColor">#ffffff</color>
+    <color name="colorPrimary">#00A2EA</color>
+    <color name="colorPrimaryDark">#008AEA</color>
+    
+    <color name="green">#259b24</color>
+    <color name="yellow">#FFD700</color>
+    <color name="sky_blue">#A4D3EE</color>
+    
 </resources>
