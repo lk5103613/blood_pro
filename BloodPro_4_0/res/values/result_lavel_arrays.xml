@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="result_level">
+        <item>理想</item>
+        <item>正常</item>
+        <item>低血压</item>
+        <item>高前期</item>
+        <item>高血压</item>
+        <item>临界高</item>
+        
+    </string-array>
+
+</resources>
