@@ -105,8 +105,6 @@ public class BloodHistoryActivity extends ActionBarActivity {
 
 	private void setData(int count, float range) {
 
-		float mult = range;
-
 		ArrayList<Entry> yVals1 = new ArrayList<Entry>();
 
 		/*
@@ -225,8 +223,7 @@ public class BloodHistoryActivity extends ActionBarActivity {
 
 		data.addDataSet(xinLvSet);
 		mLineChart.setData(data);
-//		mLineChart.animateX(list.size() / 10 * 1800);
-		mLineChart.animateY(2000);
+		mLineChart.animateY(1500);
 	}
 
 	/**
