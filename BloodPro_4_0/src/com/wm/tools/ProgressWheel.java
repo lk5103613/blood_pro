@@ -44,9 +44,9 @@ public class ProgressWheel extends View implements View.OnTouchListener {
 	
 	//Colors (with defaults)
 	private int barColor = 0xAA000000;
-	private int circleOriColor;
+//	private int circleOriColor;
 	private int circleColor = 0x00000000;
-	private int pressedCircleColor = 0x00000000;
+//	private int pressedCircleColor = 0x00000000;
 	private int rimColor = 0xAADDDDDD;
 	private int textColor = 0xFF000000;
 
@@ -207,11 +207,11 @@ public class ProgressWheel extends View implements View.OnTouchListener {
 	    
 	    circleColor = (int) a.getColor(R.styleable.ProgressWheel_circleColor,
 	    	circleColor);
-	    circleOriColor = (int) a.getColor(R.styleable.ProgressWheel_circleColor,
-		    	circleColor);
+//	    circleOriColor = (int) a.getColor(R.styleable.ProgressWheel_circleColor,
+//		    	circleColor);
 	    
-	    pressedCircleColor = (int) a.getColor(R.styleable.ProgressWheel_pressedCircleColor, 
-	    		pressedCircleColor);
+//	    pressedCircleColor = (int) a.getColor(R.styleable.ProgressWheel_pressedCircleColor, 
+//	    		pressedCircleColor);
 	}
 
 	//----------------------------------
@@ -388,19 +388,19 @@ public class ProgressWheel extends View implements View.OnTouchListener {
 
 	public void setCircleColor(int circleColor) {
 		this.circleColor = circleColor;
-		this.circleOriColor = circleColor;
-		if(this.pressedCircleColor == 0x00000000) {
-			this.pressedCircleColor = circleColor;
-		}
+//		this.circleOriColor = circleColor;
+//		if(this.pressedCircleColor == 0x00000000) {
+//			this.pressedCircleColor = circleColor;
+//		}
 	}
 	
-	public int getPressedCircleColor() {
-		return pressedCircleColor;
-	}
+//	public int getPressedCircleColor() {
+//		return pressedCircleColor;
+//	}
 	
-	public void setPressedCircleColor(int pressedCircleColor) {
-		this.pressedCircleColor = pressedCircleColor;
-	}
+//	public void setPressedCircleColor(int pressedCircleColor) {
+//		this.pressedCircleColor = pressedCircleColor;
+//	}
 
 	public int getRimColor() {
 		return rimColor;
@@ -457,18 +457,25 @@ public class ProgressWheel extends View implements View.OnTouchListener {
 	public boolean onTouch(View v, MotionEvent event) {
 		int action = event.getAction();
 		switch (action) {
-			case MotionEvent.ACTION_DOWN: 
+			case MotionEvent.ACTION_DOWN:
+				circleColor = getResources().getColor(R.color.sky_blue);
+				circlePaint.setColor(circleColor);
+				invalidate();
 			case MotionEvent.ACTION_MOVE:
-				if(circleColor != pressedCircleColor) {
-					circleColor = pressedCircleColor;
-					invalidate();
-				}
+//				if(circleColor != pressedCircleColor) {
+//					circleColor = pressedCircleColor;
+//					invalidate();
+//				}
 				break;
 			case MotionEvent.ACTION_UP:
-				if(circleColor != circleOriColor) {
-					circleColor = circleOriColor;
-					invalidate();
-				}
+//				if(circleColor != circleOriColor) {
+//					circleColor = circleOriColor;
+//					invalidate();
+//				}
+				
+				circleColor = getResources().getColor(R.color.white);
+				circlePaint.setColor(circleColor);
+				invalidate();
 				break;
 			default:
 				break;
