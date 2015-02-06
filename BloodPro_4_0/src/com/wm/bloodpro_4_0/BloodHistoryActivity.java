@@ -58,12 +58,12 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		dbService = new DBService(BloodHistoryActivity.this);
 		initvalues();
 		
-		list = dbService.getAllModle();
+		list = dbService.getAllModle();//get all history data
 
 		initPieChart();// init pie chart
 		initLineChart();// init line chart
 		setLineChartData();// set data entity
-		// initPieChartCurt(list.size() - 1);
+		initPieChartCurt(list.size() - 1);
 	}
 
 	private void initPieChart() {
@@ -225,8 +225,8 @@ public class BloodHistoryActivity extends ActionBarActivity {
 
 		data.addDataSet(xinLvSet);
 		mLineChart.setData(data);
-		mLineChart.animateX(list.size() / 10 * 1800);
-
+//		mLineChart.animateX(list.size() / 10 * 1800);
+		mLineChart.animateY(2000);
 	}
 
 	/**
@@ -281,7 +281,6 @@ public class BloodHistoryActivity extends ActionBarActivity {
 			mPieChart.setCenterText("临界高血压");
 		}
 		mPieChart.highlightValue(j, 0);
-
 	}
 
 	private class MChartValueSelectedListener implements
@@ -298,15 +297,12 @@ public class BloodHistoryActivity extends ActionBarActivity {
 							+ list.get(e.getXIndex()).getShousuo() + "   心率:"
 							+ list.get(e.getXIndex()).getXinlv(), 3000).show();
 			initPieChartCurt(e.getXIndex());
-
 		}
 
 		@Override
 		public void onNothingSelected() {
 			// TODO Auto-generated method stub
-
 		}
 
 	}
-
 }
