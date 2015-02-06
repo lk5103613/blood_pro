@@ -29,16 +29,16 @@ public class MainActivity extends Activity {
 	public static int REQUEST_ENABLE_BT = 1;
 	// request code of connect device
 	public static int REQUEST_GET_DEVICE = 2;
-	
+
 	@InjectView(R.id.progress_bar)
 	ProgressWheel progress;
 	@InjectView(R.id.result_content)
 	LinearLayout mResultContent;
 	private Context mContext;
 	private BluetoothAdapter mBluetoothAdapter;
-	private BluetoothDevice mDevice;
+	private String mDeviceAddress;
 	private int mBackClickTimes = 0;
-	
+
 	@SuppressLint("ClickableViewAccessibility")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -48,15 +48,16 @@ public class MainActivity extends Activity {
 		// init params
 		mContext = MainActivity.this;
 		// if the device doesn't support ble, close the app.
-		if(!checkSupport()) {
-			String remindStr = getResources().getString(R.string.remind_device_not_support);
+		if (!checkSupport()) {
+			String remindStr = getResources().getString(
+					R.string.remind_device_not_support);
 			Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
 			finish();
 		}
 		// if the ble is closed, request user to open.
 		requestBluetooth();
 	}
-	
+
 	// check the device support ble or not
 	private boolean checkSupport() {
 		if (!getPackageManager().hasSystemFeature(
@@ -65,7 +66,7 @@ public class MainActivity extends Activity {
 		}
 		return true;
 	}
-	
+
 	// request the access to the bluetooth
 	private void requestBluetooth() {
 		final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
@@ -76,10 +77,10 @@ public class MainActivity extends Activity {
 			startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
 		}
 	}
-	
+
 	@OnClick(R.id.progress_bar)
 	public void clickProgress(View v) {
-		if(progress.isSpinning()) {
+		if (progress.isSpinning()) {
 			progress.stopSpinning();
 			progress.setText("¿ªÊ¼¼ì²â");
 		} else {
@@ -87,13 +88,13 @@ public class MainActivity extends Activity {
 			progress.setText("Í£Ö¹¼ì²â");
 		}
 	}
-	
+
 	@OnClick(R.id.btn_detect_again)
 	public void detectAgain(View v) {
 		hideResult();
 	}
-	
-	// after dectective finished, show the result view
+
+	// after detective finished, show the result view
 	private void showResult() {
 		Animation translateAnimation = new TranslateAnimation(0.0f, 0.0f,
 				800.0f, 0.0f);
@@ -101,31 +102,31 @@ public class MainActivity extends Activity {
 		mResultContent.startAnimation(translateAnimation);
 		mResultContent.setVisibility(View.VISIBLE);
 	}
-	
+
 	// after click the button, hide the result view
 	private void hideResult() {
-		Animation translateAnimation = new TranslateAnimation(0.0f, 0.0f,
-				0.0f, 800.0f);
+		Animation translateAnimation = new TranslateAnimation(0.0f, 0.0f, 0.0f,
+				800.0f);
 		translateAnimation.setDuration(1500);
 		mResultContent.startAnimation(translateAnimation);
 		mResultContent.setVisibility(View.GONE);
 	}
-	
+
 	@OnClick(R.id.img_connect)
 	public void showDeviceList(View v) {
 		Intent intent = new Intent(mContext, DeviceListActivity.class);
 		startActivityForResult(intent, REQUEST_GET_DEVICE);
 	}
-	
+
 	@OnClick(R.id.btn_history)
 	public void showHistory(View v) {
 		Intent intent = new Intent(mContext, BloodHistoryActivity.class);
 		startActivity(intent);
 	}
-	
+
 	@Override
 	public void onBackPressed() {
-		if(mBackClickTimes == 0) {
+		if (mBackClickTimes == 0) {
 			String str = getResources().getString(R.string.ask_when_exit);
 			Toast.makeText(mContext, str, Toast.LENGTH_LONG).show();
 			mBackClickTimes = 1;
@@ -147,52 +148,96 @@ public class MainActivity extends Activity {
 			System.exit(0);
 		}
 	}
-	
+
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
-		if(requestCode == REQUEST_ENABLE_BT) {
+		if (requestCode == REQUEST_ENABLE_BT) {
 			// if user don't open ble, close the app
-			if(resultCode == RESULT_CANCELED) {
-				String remindStr = getResources().getString(R.string.remind_ble_must_open);
+			if (resultCode == RESULT_CANCELED) {
+				String remindStr = getResources().getString(
+						R.string.remind_ble_must_open);
 				Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
 				finish();
 			}
 		}
-		if(requestCode == REQUEST_GET_DEVICE) {
-			if(resultCode == RESULT_OK) {
-				mDevice = data.getExtras().getParcelable(DeviceListActivity.DEVICE);
-				connectToDevice(mDevice);
+		if (requestCode == REQUEST_GET_DEVICE) {
+			if (resultCode == RESULT_OK) {
+				mDeviceAddress = data.getExtras().getString(
+						DeviceListActivity.DEVICE_ADDRESS);
+				connectToDevice(mDeviceAddress);
 			} else {
-				String str = getResources().getString(R.string.connect_device_first);
+				String str = getResources().getString(
+						R.string.connect_device_first);
 				Toast.makeText(mContext, str, Toast.LENGTH_LONG).show();
 			}
 		}
 	}
 
-	private void connectToDevice(BluetoothDevice device) {
-		device.connectGatt(mContext, false, new BluetoothGattCallback() {
-			
-			@Override
-			public void onConnectionStateChange(BluetoothGatt gatt, int status,
-					int newState) {
-				System.out.println(newState);
-				if (newState == BluetoothProfile.STATE_CONNECTED) {
-					System.out.println("connect success!");
-				} else if(newState == BluetoothProfile.STATE_DISCONNECTED) {
-					System.out.println("diconnected");
-				}
-			}
-			
-			@Override
-			public void onCharacteristicRead(BluetoothGatt gatt,
-					BluetoothGattCharacteristic characteristic, int status) {
-				if (status == BluetoothGatt.GATT_SUCCESS) {
-					
-				}
-			}
-			
-		});
+	private void connectToDevice(final String deviceAddress) {
+		System.out.println(deviceAddress);
+		BluetoothDevice device = this.mBluetoothAdapter
+				.getRemoteDevice(deviceAddress);
+		if (device == null) {
+			return;
+		}
+		device.connectGatt(mContext, false, mBluetoothGattCallback);
 	}
+
+	private BluetoothGattCallback mBluetoothGattCallback = new BluetoothGattCallback() {
+		@Override
+		public void onConnectionStateChange(BluetoothGatt gatt, int status,
+				int newState) {
+			System.out.println(newState);
+			if (newState == BluetoothProfile.STATE_CONNECTED) {
+				System.out.println("connect success!");
+			} else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+				System.out.println("diconnected and retry");
+			}
+		}
+
+		@Override
+		public void onCharacteristicRead(BluetoothGatt gatt,
+				BluetoothGattCharacteristic characteristic, int status) {
+			readData(characteristic);
+			if (status == BluetoothGatt.GATT_SUCCESS) {
+				final byte[] data = characteristic.getValue();
+				if (data != null && data.length > 0) {
+					final StringBuilder stringBuilder = new StringBuilder(
+							data.length);
+					for (byte byteChar : data)
+						stringBuilder.append(String.format("%02X ", byteChar));
+					System.out.println(stringBuilder);
+				}
+
+			}
+		}
+		
+		@Override
+		public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+			readData(characteristic);
+			final byte[] data = characteristic.getValue();
+			if (data != null && data.length > 0) {
+				final StringBuilder stringBuilder = new StringBuilder(
+						data.length);
+				for (byte byteChar : data)
+					stringBuilder.append(String.format("%02X ", byteChar));
+				System.out.println(stringBuilder);
+			}
+		};
+	};
 	
+	private void readData(BluetoothGattCharacteristic characteristic) {
+		int flag = characteristic.getProperties();
+		int format = -1;
+		if((flag & 0x01) != 0) {
+			System.out.println("mmHg");
+		} else {
+			System.out.println("kPa");
+		}
+		format = BluetoothGattCharacteristic.FORMAT_UINT16;
+		int bloodPressure = characteristic.getIntValue(format, 1);
+		System.out.println(bloodPressure);
+	}
+
 }

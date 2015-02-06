@@ -34,7 +34,7 @@ public class DeviceListActivity extends Activity implements OnItemClickListener 
 	@InjectView(R.id.lbl_found_device)
 	TextView lblFoundDevice;
 	
-	public static String DEVICE = "device";
+	public static String DEVICE_ADDRESS = "device_address";
 	
 	// after SCAN_PERIOD ms, stop scan.
 	private static final long SCAN_PERIOD = 10000;
@@ -116,9 +116,11 @@ public class DeviceListActivity extends Activity implements OnItemClickListener 
 					if(lblFoundDevice.getVisibility() == View.GONE) {
 						lblFoundDevice.setVisibility(View.VISIBLE);
 					}
-					mDevices.add(newDevice);
-					mDeviceAdapter.add(deviceName + "\n" + address);
-					mDeviceAdapter.notifyDataSetChanged();
+					if(!mDevices.contains(newDevice)) {
+						mDevices.add(newDevice);
+						mDeviceAdapter.add(deviceName + "\n" + address);
+						mDeviceAdapter.notifyDataSetChanged();
+					}
 				}
 			});
 		}
@@ -150,7 +152,7 @@ public class DeviceListActivity extends Activity implements OnItemClickListener 
 		}
 		BluetoothDevice device = mDevices.get(position);
 		Intent resultIntent = new Intent();
-		resultIntent.putExtra(DEVICE, device);
+		resultIntent.putExtra(DEVICE_ADDRESS, device.getAddress());
 		setResult(RESULT_OK, resultIntent);
 		finish();
 	}
