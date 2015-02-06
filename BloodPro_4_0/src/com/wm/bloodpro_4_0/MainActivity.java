@@ -8,8 +8,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.TranslateAnimation;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -23,12 +25,11 @@ public class MainActivity extends Activity {
 	
 	@InjectView(R.id.progress_bar)
 	ProgressWheel progress;
-	
-	private BluetoothAdapter mBluetoothAdapter;
-	private Handler mHandler;
+	@InjectView(R.id.result_content)
+	LinearLayout mResultContent;
 	private Context mContext;
-	// after SCAN_PERIOD ms, stop scan.
-	private static final long SCAN_PERIOD = 10000;
+	private BluetoothAdapter mBluetoothAdapter;
+	private int mBackClickTimes = 0;
 
 	@SuppressLint("ClickableViewAccessibility")
 	@Override
@@ -37,7 +38,6 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 		ButterKnife.inject(this);
 		// init params
-		mHandler = new Handler();
 		mContext = MainActivity.this;
 		// if the device doesn't support ble, close the app.
 		if(!checkSupport()) {
@@ -47,6 +47,7 @@ public class MainActivity extends Activity {
 		}
 		// if the ble is closed, request user to open.
 		requestBluetooth();
+		showResult();
 	}
 	
 	// check the device support ble or not
@@ -68,7 +69,6 @@ public class MainActivity extends Activity {
 			startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
 		}
 	}
-		
 	
 	@OnClick(R.id.progress_bar)
 	public void clickProgress(View v) {
@@ -81,6 +81,35 @@ public class MainActivity extends Activity {
 		}
 	}
 	
+	@OnClick(R.id.btn_detect_again)
+	public void detectAgain(View v) {
+		hideResult();
+	}
+	
+	// after dectective finished, show the result view
+	private void showResult() {
+		Animation translateAnimation = new TranslateAnimation(0.0f, 0.0f,
+				800.0f, 0.0f);
+		translateAnimation.setDuration(1500);
+		mResultContent.startAnimation(translateAnimation);
+		mResultContent.setVisibility(View.VISIBLE);
+	}
+	
+	// after click the button, hide the result view
+	private void hideResult() {
+		Animation translateAnimation = new TranslateAnimation(0.0f, 0.0f,
+				0.0f, 800.0f);
+		translateAnimation.setDuration(1500);
+		mResultContent.startAnimation(translateAnimation);
+		mResultContent.setVisibility(View.GONE);
+	}
+	
+	@OnClick(R.id.img_connect)
+	public void showDeviceList(View v) {
+		Intent intent = new Intent(mContext, DeviceListActivity.class);
+		startActivity(intent);
+	}
+	
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
@@ -91,6 +120,31 @@ public class MainActivity extends Activity {
 				Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
 				finish();
 			}
+		}
+	}
+	
+	@Override
+	public void onBackPressed() {
+		if(mBackClickTimes == 0) {
+			String str = getResources().getString(R.string.ask_when_exit);
+			Toast.makeText(mContext, str, Toast.LENGTH_LONG).show();
+			mBackClickTimes = 1;
+			new Thread() {
+				@Override
+				public void run() {
+					try {
+						Thread.sleep(2000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					} finally {
+						mBackClickTimes = 0;
+					}
+				}
+			}.start();
+			return;
+		} else {
+			finish();
+			System.exit(0);
 		}
 	}
 	

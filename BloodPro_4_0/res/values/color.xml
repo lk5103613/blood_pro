@@ -8,6 +8,11 @@
     <color name="wheel_text_color">#43B2E6</color>
     
     <color name="main_text_color">#FFFFFF</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    
+    <color name="result_text_color">#000000</color>
+    <color name="result_seperate_color">#ADB7C1</color>
     
     <color name="btn_border_color">#BAD0D9</color>
     <color name="btn_pressed_filled_color">#008AEA</color>

@@ -28,6 +28,7 @@
                 android:src="@drawable/logo" />
 
             <ImageView
+                android:id="@+id/img_connect"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
@@ -46,7 +47,6 @@
             android:id="@+id/progress_bar"
             android:layout_width="150dp"
             android:layout_height="150dp"
-            android:clickable="true"
             android:layout_centerInParent="true"
             ProgressWheel:barColor="@color/wheel_bar_color"
             ProgressWheel:barLength="20dp"
@@ -58,7 +58,8 @@
             ProgressWheel:spinSpeed="1dp"
             ProgressWheel:text="@string/begin_detect"
             ProgressWheel:textColor="@color/wheel_text_color"
-            ProgressWheel:textSize="16sp" />
+            ProgressWheel:textSize="16sp"
+            android:clickable="true" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -78,7 +79,7 @@
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
         android:text="@string/last_detect_time"
-        android:textColor="#ffffff" />
+        android:textColor="@color/white" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -118,20 +119,142 @@
             android:layout_height="60dp"
             android:contentDescription="@string/action_3_description"
             android:src="@drawable/ic_action_3" />
-        
     </LinearLayout>
-    
+
     <Button
         android:id="@+id/btn_history"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="20dp"
         android:layout_marginLeft="22dp"
         android:layout_marginRight="22dp"
-        android:layout_marginBottom="20dp"
+        android:background="@drawable/main_btn_bg"
         android:minHeight="48dp"
-        android:textColor="@color/main_text_color"
+        android:text="@string/look_for_history"
+        android:textColor="@color/main_text_color" />
+
+    <LinearLayout
+        android:id="@+id/result_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="@drawable/btn_history_bg"
-        android:text="@string/look_for_history" />
+        android:layout_centerHorizontal="true"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:background="@drawable/result_bg"
+        android:orientation="vertical"
+        android:padding="5dp"
+        android:visibility="invisible" >
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@color/white"
+            android:padding="7dp" >
+
+            <TextView
+                android:id="@+id/txt_heart_rate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:text="@string/heart_rate"
+                android:textColor="@color/black"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/txt_heart_rate_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentTop="true"
+                android:text="@string/heart_rate_value"
+                android:textColor="@color/black"
+                android:textSize="18sp" />
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#ADB7C1" >
+        </LinearLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:padding="7dp" >
+
+            <TextView
+                android:id="@+id/txt_systolic"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:text="@string/systolic"
+                android:textColor="@color/result_text_color"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/txt_systolic_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentTop="true"
+                android:text="@string/systolic_value"
+                android:textColor="@color/result_text_color"
+                android:textSize="18sp" />
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/result_seperate_color" >
+        </LinearLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:padding="7dp" >
+
+            <TextView
+                android:id="@+id/txt_diastolic"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:text="@string/diastolic"
+                android:textColor="@color/result_text_color"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/txt_diastolic_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentTop="true"
+                android:text="@string/diastolic_value"
+                android:textColor="@color/result_text_color"
+                android:textSize="18sp" />
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/result_seperate_color" >
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btn_detect_again"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/main_btn_bg"
+	        android:minHeight="48dp"
+            android:text="@string/detect_again"
+            android:textColor="@color/white" />
+    </LinearLayout>
 
 </RelativeLayout>

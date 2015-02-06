@@ -456,7 +456,6 @@ public class ProgressWheel extends View implements View.OnTouchListener {
 	@Override
 	public boolean onTouch(View v, MotionEvent event) {
 		int action = event.getAction();
-		System.out.println(circleOriColor + "     " + pressedCircleColor);
 		switch (action) {
 			case MotionEvent.ACTION_DOWN: 
 			case MotionEvent.ACTION_MOVE:

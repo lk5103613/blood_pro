@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@color/white"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/lbl_found_device"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:background="@drawable/blue_bg"
+        android:paddingStart="5dp"
+        android:paddingEnd="0dp"
+        android:text="@string/found_device"
+        android:textColor="@color/white"
+        android:visibility="gone" />
+
+    <ListView
+        android:id="@+id/device_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:stackFromBottom="true" />
+
+    <ProgressBar
+        android:id="@+id/progress_scanning"
+        android:layout_gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/btn_scan_device"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:background="@drawable/main_btn_bg"
+        android:text="@string/button_scan"
+        android:textColor="@color/white" />
+
+</LinearLayout>
