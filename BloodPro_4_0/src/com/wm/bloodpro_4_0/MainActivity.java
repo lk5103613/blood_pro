@@ -117,6 +117,12 @@ public class MainActivity extends Activity {
 		startActivityForResult(intent, REQUEST_GET_DEVICE);
 	}
 	
+	@OnClick(R.id.btn_history)
+	public void showHistory(View v) {
+		Intent intent = new Intent(mContext, BloodHistoryActivity.class);
+		startActivity(intent);
+	}
+	
 	@Override
 	public void onBackPressed() {
 		if(mBackClickTimes == 0) {
@@ -157,6 +163,9 @@ public class MainActivity extends Activity {
 			if(resultCode == RESULT_OK) {
 				mDevice = data.getExtras().getParcelable(DeviceListActivity.DEVICE);
 				connectToDevice(mDevice);
+			} else {
+				String str = getResources().getString(R.string.connect_device_first);
+				Toast.makeText(mContext, str, Toast.LENGTH_LONG).show();
 			}
 		}
 	}
@@ -171,6 +180,7 @@ public class MainActivity extends Activity {
 				if (newState == BluetoothProfile.STATE_CONNECTED) {
 					System.out.println("connect success!");
 				} else if(newState == BluetoothProfile.STATE_DISCONNECTED) {
+					System.out.println("diconnected");
 				}
 			}
 			

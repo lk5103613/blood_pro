@@ -32,5 +32,6 @@
     <string name="title_activity_device_list">DeviceListActivity</string>
     <string name="scanning_now">正在扫描中。。。</string>
     <string name="ask_when_exit">再按一次退出程序</string>
+    <string name="connect_device_first">请选择设备进行连接</string>
 
 </resources>
