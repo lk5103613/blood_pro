@@ -3,8 +3,7 @@ package com.wm.tools;
 public class DataConvertUtils {
 	
 	public static String hexToDecimal(String hex) {
-		int hexNumber = Integer.valueOf(hex);
-		return Integer.valueOf("FFFF", hexNumber).toString();
+		return Integer.valueOf(hex, 16).toString();
 	}
 	
 	public static String decimalToHex(String decimal) {

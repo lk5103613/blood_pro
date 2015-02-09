@@ -1,6 +1,7 @@
 package com.wm.bloodpro_4_0;
 
 import java.util.List;
+import java.util.UUID;
 
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
@@ -85,9 +86,6 @@ public class BluetoothLeService extends Service {
 		public void onCharacteristicChanged(BluetoothGatt gatt,
 				BluetoothGattCharacteristic characteristic) {
 			broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
-			if (characteristic.getValue() != null) {
-				System.out.println(characteristic.getStringValue(0));
-			}
 			System.out.println("--------onCharacteristicChanged-----");
 		}
 
@@ -114,6 +112,7 @@ public class BluetoothLeService extends Service {
 			for (byte byteChar : data) {
 				stringBuilder.append(String.format("%02x ", byteChar));
 			}
+			System.out.println(stringBuilder.toString());
 			intent.putExtra(EXTRA_DATA, stringBuilder.toString().trim());
 		}
 		sendBroadcast(intent);
@@ -224,4 +223,18 @@ public class BluetoothLeService extends Service {
 		this.mBluetoothGatt.disconnect();
 	}
 	
+	public void setCharacteristicNotification(
+			BluetoothGattCharacteristic characteristic, boolean enabled) {
+		if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+			return;
+		}
+		BluetoothGattDescriptor descriptor = characteristic.getDescriptor(UUID
+				.fromString("00002902-0000-1000-8000-00805f9b34fb"));
+		if (descriptor != null) {
+			descriptor
+					.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+			mBluetoothGatt.writeDescriptor(descriptor);
+		}
+		mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
+	}
 }

@@ -19,10 +19,11 @@ public class ResultInfo {
 	public ResultInfo(String result) {
 		Map<String, String> AsciiTable = ASCIIData.getASCIITable();
 		Locale defloc = Locale.getDefault();
+		result = result.toUpperCase(defloc);
 		String[] items = result.split(" ");
-		systolic = DataConvertUtils.hexToDecimal(AsciiTable.get(items[3]) + AsciiTable.get(items[4]));
-		diastolic = DataConvertUtils.hexToDecimal(AsciiTable.get(items[5]) + AsciiTable.get(items[6]));
-		heartRate = DataConvertUtils.hexToDecimal(AsciiTable.get(items[7]) + AsciiTable.get(items[8]));
+		systolic = DataConvertUtils.hexToDecimal(AsciiTable.get(items[4]) + AsciiTable.get(items[3]));
+		diastolic = DataConvertUtils.hexToDecimal(AsciiTable.get(items[6]) + AsciiTable.get(items[5]));
+		heartRate = DataConvertUtils.hexToDecimal(AsciiTable.get(items[8]) + AsciiTable.get(items[7]));
 		heartRateState = HEART_RATE_STATE_NORMAL;
 		if(items[9].toLowerCase(defloc).equals("55")) {
 			heartRateState = HEART_RATE_STATE_NORMAL;

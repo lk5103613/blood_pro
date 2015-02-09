@@ -283,6 +283,7 @@ public class MainActivity extends Activity {
 				displayGattServices(mBluetoothLeService
 						.getSupportedGattServices());
 			} else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
+				System.out.println("get data");
 				String extraData = intent.getStringExtra(BluetoothLeService.EXTRA_DATA);
 				displayData(extraData);
 			}
@@ -296,7 +297,9 @@ public class MainActivity extends Activity {
 			for(BluetoothGattCharacteristic characteristic : gattService.getCharacteristics()) {
 				String uuid = characteristic.getUuid().toString();
 				if(uuid.equals(Uuids.RESULT_INFO)) {
-					mBluetoothLeService.readCharacteristic(characteristic);
+					mBluetoothLeService.setCharacteristicNotification(
+							characteristic, true);
+//					mBluetoothLeService.readCharacteristic(characteristic);
 				}
 			}
 		}
