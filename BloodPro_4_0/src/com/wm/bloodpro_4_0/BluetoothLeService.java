@@ -1,7 +1,6 @@
 package com.wm.bloodpro_4_0;
 
 import java.util.List;
-import java.util.UUID;
 
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
@@ -115,7 +114,7 @@ public class BluetoothLeService extends Service {
 			for (byte byteChar : data) {
 				stringBuilder.append(String.format("%02x ", byteChar));
 			}
-			intent.putExtra(EXTRA_DATA, stringBuilder.toString());
+			intent.putExtra(EXTRA_DATA, stringBuilder.toString().trim());
 		}
 		sendBroadcast(intent);
 	}
@@ -191,6 +190,7 @@ public class BluetoothLeService extends Service {
 		if (mBluetoothGatt == null) {
 			return;
 		}
+		mBluetoothGatt.disconnect();
 		mBluetoothGatt.close();
 		mBluetoothGatt = null;
 	}
@@ -217,10 +217,11 @@ public class BluetoothLeService extends Service {
 		return mBluetoothGatt.getServices();
 	}
 	
-	public BluetoothGattService getGattServiceByUuid(String uuid) {
-		if (mBluetoothGatt == null)
-			return null;
-		return mBluetoothGatt.getService(UUID.fromString(uuid));
+	public void disconnect() {
+		if(mBluetoothGatt == null) {
+			return;
+		}
+		this.mBluetoothGatt.disconnect();
 	}
-
+	
 }

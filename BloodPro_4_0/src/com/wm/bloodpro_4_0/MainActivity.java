@@ -1,7 +1,6 @@
 package com.wm.bloodpro_4_0;
 
 import java.util.List;
-import java.util.Map;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -22,14 +21,13 @@ import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 
-import com.wm.tools.ASCIIData;
-import com.wm.tools.DataConvertUtils;
 import com.wm.tools.ProgressWheel;
 import com.wm.tools.Uuids;
 import com.wn.entity.ResultException;
@@ -48,6 +46,8 @@ public class MainActivity extends Activity {
 	ProgressWheel progress;
 	@InjectView(R.id.result_content)
 	LinearLayout mResultContent;
+	@InjectView(R.id.img_connect)
+	ImageView imgConnect;
 	
 	private Context mContext;
 	private BluetoothAdapter mBluetoothAdapter;
@@ -64,6 +64,10 @@ public class MainActivity extends Activity {
 		registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 		if (mBluetoothLeService != null) {
 			final boolean result = mBluetoothLeService.connect(mDeviceAddress);
+			if(!result) {
+				String connectFailedStr = getResources().getString(R.string.connect_failed);
+				Toast.makeText(mContext, connectFailedStr, Toast.LENGTH_LONG).show();
+			}
 		}
 	}
 	
@@ -96,8 +100,23 @@ public class MainActivity extends Activity {
 		requestBluetooth();
 		
 		Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
-		boolean bll = getApplicationContext().bindService(gattServiceIntent, mServiceConnection,
+		getApplicationContext().bindService(gattServiceIntent, mServiceConnection,
 				BIND_AUTO_CREATE);
+	}
+	
+	@Override
+	protected void onPause() {
+		super.onPause();
+		unregisterReceiver(mGattUpdateReceiver);
+		if(mConnected)
+			this.mBluetoothLeService.disconnect();
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		unbindService(mServiceConnection);
+		mBluetoothLeService = null;
 	}
 
 	// check the device support ble or not
@@ -138,8 +157,14 @@ public class MainActivity extends Activity {
 	
 	@OnClick(R.id.img_connect)
 	public void showDeviceList(View v) {
-		Intent intent = new Intent(mContext, DeviceListActivity.class);
-		startActivityForResult(intent, REQUEST_GET_DEVICE);
+		if(mConnected) {
+			this.mBluetoothLeService.disconnect();
+			String remindStr = getResources().getString(R.string.connect_broken);
+			Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
+		} else {
+			Intent intent = new Intent(mContext, DeviceListActivity.class);
+			startActivityForResult(intent, REQUEST_GET_DEVICE);
+		}
 	}
 
 	@OnClick(R.id.btn_history)
@@ -199,7 +224,7 @@ public class MainActivity extends Activity {
 			if (resultCode == RESULT_CANCELED) {
 				String remindStr = getResources().getString(
 						R.string.remind_ble_must_open);
-				Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
+				Toast.makeText(mContext, remindStr, Toast.LENGTH_SHORT).show();
 				finish();
 			}
 		}
@@ -241,10 +266,16 @@ public class MainActivity extends Activity {
 			final String action = intent.getAction();
 			if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
 				mConnected = true;
+				imgConnect.setImageResource(R.drawable.ic_connected);
+				String remindStr = getResources().getString(R.string.connect_success);
+				Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
 				System.out.println("connected");
 			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED
 					.equals(action)) {
 				mConnected = false;
+				imgConnect.setImageResource(R.drawable.ic_unconnect);
+				String remindStr = getResources().getString(R.string.connect_broken);
+				Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
 				System.out.println("disconnected");
 			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED
 					.equals(action)) {
@@ -282,17 +313,6 @@ public class MainActivity extends Activity {
 		}
 	}
 	
-	@Override
-	protected void onPause() {
-		super.onPause();
-		unregisterReceiver(mGattUpdateReceiver);
-	}
-
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		unbindService(mServiceConnection);
-		mBluetoothLeService = null;
-	}
+	
 
 }
