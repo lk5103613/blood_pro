@@ -56,7 +56,7 @@ public class BloodHistoryActivity extends ActionBarActivity {
 
 		mParties = getResources().getStringArray(R.array.result_level);
 		dbService = new DBService(BloodHistoryActivity.this);
-		initvalues();
+//		initvalues();
 
 		list = dbService.getAllModle();// get all history data
 

@@ -199,9 +199,11 @@ public class MainActivity extends Activity {
 		@Override
 		public void onCharacteristicRead(BluetoothGatt gatt,
 				BluetoothGattCharacteristic characteristic, int status) {
+			System.out.println("enter red");
 			readData(characteristic);
 			if (status == BluetoothGatt.GATT_SUCCESS) {
 				final byte[] data = characteristic.getValue();
+				System.out.println("data " + data);
 				if (data != null && data.length > 0) {
 					final StringBuilder stringBuilder = new StringBuilder(
 							data.length);
