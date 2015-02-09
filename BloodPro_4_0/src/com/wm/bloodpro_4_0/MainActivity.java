@@ -1,6 +1,6 @@
 package com.wm.bloodpro_4_0;
 
-import java.util.List;
+import java.util.UUID;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -17,17 +17,18 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 
+import com.wm.tools.DataConvertUtils;
 import com.wm.tools.ProgressWheel;
 import com.wm.tools.Uuids;
 import com.wn.entity.ResultException;
@@ -43,11 +44,19 @@ public class MainActivity extends Activity {
 	public static int REQUEST_GET_DEVICE = 2;
 
 	@InjectView(R.id.progress_bar)
-	ProgressWheel progress;
+	ProgressWheel mProgress;
 	@InjectView(R.id.result_content)
 	LinearLayout mResultContent;
 	@InjectView(R.id.img_connect)
-	ImageView imgConnect;
+	ImageView mImgConnect;
+	@InjectView(R.id.txt_heart_rate_value)
+	TextView mLblHeartRate;
+	@InjectView(R.id.txt_systolic_value)
+	TextView mLblSystolic;
+	@InjectView(R.id.txt_diastolic_value)
+	TextView mLblDiastolic;
+	@InjectView(R.id.lbl_current_pressure)
+	TextView mLblCurrentPressure;
 	
 	private Context mContext;
 	private BluetoothAdapter mBluetoothAdapter;
@@ -57,6 +66,10 @@ public class MainActivity extends Activity {
 	private boolean mConnected = false;
 	private ResultInfo mResultInfo = null;
 	private ResultException mResultException = null;
+	private boolean mNeedNewData = true;
+	private BluetoothGattCharacteristic mNotifyCharacteristic = null;
+	private BluetoothGattCharacteristic mInforCharacteristic = null;
+	private boolean mIsConnecting = false;
 	
 	@Override
 	protected void onResume() {
@@ -100,7 +113,7 @@ public class MainActivity extends Activity {
 		requestBluetooth();
 		
 		Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
-		getApplicationContext().bindService(gattServiceIntent, mServiceConnection,
+		bindService(gattServiceIntent, mServiceConnection,
 				BIND_AUTO_CREATE);
 	}
 	
@@ -115,7 +128,8 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		unbindService(mServiceConnection);
+		if(mBluetoothLeService != null && mServiceConnection != null)
+			unbindService(mServiceConnection);
 		mBluetoothLeService = null;
 	}
 
@@ -141,23 +155,62 @@ public class MainActivity extends Activity {
 
 	@OnClick(R.id.progress_bar)
 	public void clickProgress(View v) {
-		if (progress.isSpinning()) {
-			progress.stopSpinning();
-			progress.setText("¿ªÊ¼¼ì²â");
-		} else {
-			progress.spin();
-			progress.setText("Í£Ö¹¼ì²â");
+		if(this.mResultContent.getVisibility() == View.VISIBLE) {
+			hideResult();
 		}
+		if(!mConnected) {
+			String msg = getResources().getString(R.string.connect_device_first);
+			Toast.makeText(mContext, msg, Toast.LENGTH_LONG).show();
+			return;
+		}
+		if (mProgress.isSpinning()) {
+			scanFinish();
+		} else {
+			mProgress.spin();
+			mProgress.setText("Í£Ö¹¼ì²â");
+			if(!beginDetect()) {
+				
+			}
+		}
+	}
+	
+	private boolean beginDetect() {
+		if(mInforCharacteristic == null) {
+			return false;
+		}
+		mBluetoothLeService.setCharacteristicNotification(
+				mInforCharacteristic, true);
+		mNotifyCharacteristic = mInforCharacteristic;
+		return true;
+	}
+	
+	private void scanFinish() {
+		mProgress.stopSpinning();
+		mProgress.setText("¿ªÊ¼¼ì²â");
+		if(mNotifyCharacteristic != null)
+			mBluetoothLeService.setCharacteristicNotification(mNotifyCharacteristic, false);
+		mNotifyCharacteristic = null;
 	}
 
 	@OnClick(R.id.btn_detect_again)
 	public void detectAgain(View v) {
 		hideResult();
+		this.mLblCurrentPressure.setText("0");
 	}
 	
 	@OnClick(R.id.img_connect)
 	public void showDeviceList(View v) {
+		if(this.mResultContent.getVisibility() == View.VISIBLE) {
+			hideResult();
+		}
+		if(mIsConnecting) {
+			String msg = getResources().getString(R.string.connecting_now);
+			Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show();
+			return;
+		}
 		if(mConnected) {
+			scanFinish();
+			this.mLblCurrentPressure.setText("000");
 			this.mBluetoothLeService.disconnect();
 			String remindStr = getResources().getString(R.string.connect_broken);
 			Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
@@ -169,16 +222,20 @@ public class MainActivity extends Activity {
 
 	@OnClick(R.id.btn_history)
 	public void showHistory(View v) {
+		scanFinish();
 		Intent intent = new Intent(mContext, BloodHistoryActivity.class);
 		startActivity(intent);
 	}
 
 	// after detective finished, show the result view
-	private void showResult() {
+	private void showResult(String systolic, String diastolic, String heartRate ) {
 		Animation translateAnimation = new TranslateAnimation(0.0f, 0.0f,
 				800.0f, 0.0f);
 		translateAnimation.setDuration(1500);
 		mResultContent.startAnimation(translateAnimation);
+		this.mLblHeartRate.setText(heartRate);
+		this.mLblSystolic.setText(systolic);
+		this.mLblDiastolic.setText(diastolic);
 		mResultContent.setVisibility(View.VISIBLE);
 	}
 
@@ -232,6 +289,7 @@ public class MainActivity extends Activity {
 			if (resultCode == RESULT_OK) {
 				mDeviceAddress = data.getExtras().getString(
 						DeviceListActivity.DEVICE_ADDRESS);
+				mIsConnecting = true;
 			} else {
 				String str = getResources().getString(
 						R.string.connect_device_first);
@@ -248,7 +306,6 @@ public class MainActivity extends Activity {
 			mBluetoothLeService = ((BluetoothLeService.LocalBinder) service)
 					.getService();
 			if (!mBluetoothLeService.initialize()) {
-				Log.e(TAG, "Unable to initialize Bluetooth");
 				finish();
 			}
 			mBluetoothLeService.connect(mDeviceAddress);
@@ -266,53 +323,55 @@ public class MainActivity extends Activity {
 			final String action = intent.getAction();
 			if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
 				mConnected = true;
-				imgConnect.setImageResource(R.drawable.ic_connected);
+				mIsConnecting = false;
+				mImgConnect.setImageResource(R.drawable.ic_connected);
 				String remindStr = getResources().getString(R.string.connect_success);
 				Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
-				System.out.println("connected");
 			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED
 					.equals(action)) {
 				mConnected = false;
-				imgConnect.setImageResource(R.drawable.ic_unconnect);
+				mIsConnecting = false;
+				mImgConnect.setImageResource(R.drawable.ic_unconnect);
+				scanFinish();
 				String remindStr = getResources().getString(R.string.connect_broken);
 				Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
-				System.out.println("disconnected");
 			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED
 					.equals(action)) {
-				System.out.println("discovery");
-				displayGattServices(mBluetoothLeService
-						.getSupportedGattServices());
+				BluetoothGattService service = mBluetoothLeService.getServiceByUuid(Uuids.RESULT_INFO_SERVICE);
+				if(service == null) {
+					return;
+				}
+				mInforCharacteristic = service.getCharacteristic(UUID.fromString(Uuids.RESULT_INFO));
 			} else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
-				System.out.println("get data");
 				String extraData = intent.getStringExtra(BluetoothLeService.EXTRA_DATA);
 				displayData(extraData);
 			}
 		}
 	};
 	
-	private void displayGattServices(List<BluetoothGattService> gattServices) {
-		if (gattServices == null)
-			return;
-		for (BluetoothGattService gattService : gattServices) {
-			for(BluetoothGattCharacteristic characteristic : gattService.getCharacteristics()) {
-				String uuid = characteristic.getUuid().toString();
-				if(uuid.equals(Uuids.RESULT_INFO)) {
-					mBluetoothLeService.setCharacteristicNotification(
-							characteristic, true);
-//					mBluetoothLeService.readCharacteristic(characteristic);
-				}
-			}
-		}
+	private String getPressureValue(String data) {
+		String[] items = data.split(" ");
+		int pressureH = Integer.valueOf(DataConvertUtils.hexToDecimal(items[2]));
+		int pressureL = Integer.valueOf(DataConvertUtils.hexToDecimal(items[1]));
+		return pressureH * 256 + pressureL + "";
 	}
 	
 	private void displayData(String data) {
-		System.out.println(data.trim().length());
 		if(data.trim().length() == 38) {
+			mNeedNewData = false;
 			mResultInfo = new ResultInfo(data);
-			System.out.println(mResultInfo.systolic + "   " + mResultInfo.diastolic + "   " + mResultInfo.heartRate);
+			showResult(mResultInfo.systolic, mResultInfo.diastolic, mResultInfo.heartRate);
 		} else if(data.trim().length() == 29) {
+			mNeedNewData = false;
 			mResultException = new ResultException(data);
-			System.out.println(mResultException.errorCode + "    " + mResultException.description);
+			Toast.makeText(mContext, mResultException.description, Toast.LENGTH_LONG).show();
+		} else if(data.trim().length() == 8) {
+			mNeedNewData = true;
+			String currentPressure = getPressureValue(data);
+			this.mLblCurrentPressure.setText(currentPressure);
+		}
+		if(!mNeedNewData) {
+			scanFinish();
 		}
 	}
 	

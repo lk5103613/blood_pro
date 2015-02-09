@@ -20,7 +20,7 @@ public class Uuids {
 	public static String characteristic3_7 = "00002a29-0000-1000-8000-00805f9b34fb";
 	public static String characteristic3_8 = "00002a2a-0000-1000-8000-00805f9b34fb";
 	public static String characteristic3_9 = "00002a50-0000-1000-8000-00805f9b34fb";
-	public static String services4 = "0000fff0-0000-1000-8000-00805f9b34fb";
+	public static String RESULT_INFO_SERVICE = "0000fff0-0000-1000-8000-00805f9b34fb";
 	public static String characteristic4_1 = "0000fff1-0000-1000-8000-00805f9b34fb"; // notify
 	public static String characteristic4_2 = "0000fff2-0000-1000-8000-00805f9b34fb";
 	public static String characteristic4_3 = "0000fff3-0000-1000-8000-00805f9b34fb";

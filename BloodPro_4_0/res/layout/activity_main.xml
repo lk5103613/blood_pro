@@ -82,6 +82,7 @@
         android:textColor="@color/white" />
 
     <TextView
+        android:id="@+id/lbl_current_pressure"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/last_detect_time"
@@ -133,7 +134,7 @@
         android:minHeight="48dp"
         android:text="@string/look_for_history"
         android:textColor="@color/main_text_color" />
-
+    
     <LinearLayout
         android:id="@+id/result_content"
         android:layout_width="match_parent"
@@ -252,7 +253,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/main_btn_bg"
-	        android:minHeight="48dp"
+            android:minHeight="48dp"
             android:text="@string/detect_again"
             android:textColor="@color/white" />
     </LinearLayout>

@@ -36,6 +36,7 @@
     <string name="connect_failed">连接失败，请重新选择设备连接</string>
     <string name="connect_broken">连接已经断开，请重新连接</string>
     <string name="connect_success">连接成功</string>
+    <string name="connecting_now">正在连接中，请耐心等待</string>
     
     <string name="blood_cartogram">血压统计图</string>
     <string name="idea_level">理想血压</string>

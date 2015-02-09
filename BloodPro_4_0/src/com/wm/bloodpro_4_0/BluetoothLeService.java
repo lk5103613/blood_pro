@@ -86,7 +86,6 @@ public class BluetoothLeService extends Service {
 		public void onCharacteristicChanged(BluetoothGatt gatt,
 				BluetoothGattCharacteristic characteristic) {
 			broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
-			System.out.println("--------onCharacteristicChanged-----");
 		}
 
 		@Override
@@ -112,7 +111,6 @@ public class BluetoothLeService extends Service {
 			for (byte byteChar : data) {
 				stringBuilder.append(String.format("%02x ", byteChar));
 			}
-			System.out.println(stringBuilder.toString());
 			intent.putExtra(EXTRA_DATA, stringBuilder.toString().trim());
 		}
 		sendBroadcast(intent);
@@ -214,6 +212,13 @@ public class BluetoothLeService extends Service {
 		if (mBluetoothGatt == null)
 			return null;
 		return mBluetoothGatt.getServices();
+	}
+	
+	public BluetoothGattService getServiceByUuid(String uuid) {
+		if(mBluetoothGatt == null) {
+			return null;
+		}
+		return mBluetoothGatt.getService(UUID.fromString(uuid));
 	}
 	
 	public void disconnect() {
