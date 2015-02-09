@@ -1,6 +1,7 @@
 package com.wm.bloodpro_4_0;
 
 import java.util.List;
+import java.util.Map;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -27,8 +28,12 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 
+import com.wm.tools.ASCIIData;
+import com.wm.tools.DataConvertUtils;
 import com.wm.tools.ProgressWheel;
 import com.wm.tools.Uuids;
+import com.wn.entity.ResultException;
+import com.wn.entity.ResultInfo;
 
 public class MainActivity extends Activity {
 	
@@ -50,6 +55,8 @@ public class MainActivity extends Activity {
 	private int mBackClickTimes = 0;
 	private BluetoothLeService mBluetoothLeService;
 	private boolean mConnected = false;
+	private ResultInfo mResultInfo = null;
+	private ResultException mResultException = null;
 	
 	@Override
 	protected void onResume() {
@@ -57,7 +64,6 @@ public class MainActivity extends Activity {
 		registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 		if (mBluetoothLeService != null) {
 			final boolean result = mBluetoothLeService.connect(mDeviceAddress);
-			Log.d(TAG, "Connect request result=" + result);
 		}
 	}
 	
@@ -257,26 +263,23 @@ public class MainActivity extends Activity {
 			return;
 		for (BluetoothGattService gattService : gattServices) {
 			for(BluetoothGattCharacteristic characteristic : gattService.getCharacteristics()) {
-//				if(characteristic.getUuid().toString().equals(Uuids.C_PERIPHERAL_PRIVACY_FLAG)) {
+				String uuid = characteristic.getUuid().toString();
+				if(uuid.equals(Uuids.RESULT_INFO)) {
 					mBluetoothLeService.readCharacteristic(characteristic);
-					if(characteristic.getUuid().toString().equals(Uuids.characteristic1_1)) {
-						String value = "[B@42dd52e6";
-						characteristic.setValue(value.getBytes());
-						mBluetoothLeService.writeCharacteristic(characteristic);
-					}
-					try {
-						Thread.sleep(500);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-//				}
+				}
 			}
 		}
 	}
 	
 	private void displayData(String data) {
-		System.out.println(data);
+		System.out.println(data.trim().length());
+		if(data.trim().length() == 38) {
+			mResultInfo = new ResultInfo(data);
+			System.out.println(mResultInfo.systolic + "   " + mResultInfo.diastolic + "   " + mResultInfo.heartRate);
+		} else if(data.trim().length() == 29) {
+			mResultException = new ResultException(data);
+			System.out.println(mResultException.errorCode + "    " + mResultException.description);
+		}
 	}
 	
 	@Override

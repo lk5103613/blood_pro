@@ -1,8 +1,7 @@
 package com.wm.bloodpro_4_0;
 
 import java.util.List;
-
-import com.wm.tools.SharePreferencesUtils;
+import java.util.UUID;
 
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
@@ -16,7 +15,6 @@ import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
@@ -112,7 +110,12 @@ public class BluetoothLeService extends Service {
 		final Intent intent = new Intent(action);
 		final byte[] data = characteristic.getValue();
 		if (data != null && data.length > 0) {
-			intent.putExtra(EXTRA_DATA, data.toString());
+			final StringBuilder stringBuilder = new StringBuilder(
+					data.length);
+			for (byte byteChar : data) {
+				stringBuilder.append(String.format("%02x ", byteChar));
+			}
+			intent.putExtra(EXTRA_DATA, stringBuilder.toString());
 		}
 		sendBroadcast(intent);
 	}
@@ -211,8 +214,13 @@ public class BluetoothLeService extends Service {
 	public List<BluetoothGattService> getSupportedGattServices() {
 		if (mBluetoothGatt == null)
 			return null;
-
 		return mBluetoothGatt.getServices();
+	}
+	
+	public BluetoothGattService getGattServiceByUuid(String uuid) {
+		if (mBluetoothGatt == null)
+			return null;
+		return mBluetoothGatt.getService(UUID.fromString(uuid));
 	}
 
 }
