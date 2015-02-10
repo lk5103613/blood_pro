@@ -1,6 +1,5 @@
 package com.wm.bloodpro_4_0;
 
-import java.util.Calendar;
 import java.util.UUID;
 
 import android.annotation.SuppressLint;
@@ -29,8 +28,6 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 
-import com.wm.db.BloodInfo;
-import com.wm.db.DBService;
 import com.wm.task.InsertResultTask;
 import com.wm.tools.DataConvertUtils;
 import com.wm.tools.ProgressWheel;
