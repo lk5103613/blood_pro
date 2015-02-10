@@ -1,5 +1,6 @@
 package com.wm.bloodpro_4_0;
 
+import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 
@@ -136,6 +137,8 @@ public class MainActivity extends Activity {
 		Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
 		bindService(gattServiceIntent, mServiceConnection,
 				BIND_AUTO_CREATE);
+		
+//		initvalues();//ÃÌº”≤‚ ‘ ˝æ›
 		
 	}
 	
@@ -450,5 +453,30 @@ public class MainActivity extends Activity {
 			scanFinish();
 		}
 	}
+	
+	/**
+	 * insert simulate data
+	 */
+	private void initvalues() {
+		BloodInfo bloodInfo = new BloodInfo();
+		for (int i = 0; i < 2; i++) {
+			double d = Math.random() * 80 + 70;
+			bloodInfo
+					.setHeartRate((d + "").substring(0, (d + "").indexOf(".")));
+			double d1 = Math.random() * 80 + 70;
+			bloodInfo
+					.setSystolic((d1 + "").substring(0, (d1 + "").indexOf(".")));
+			double d2 = Math.random() * 80 + 70;
+			bloodInfo.setDiastolic((d2 + "").substring(0,
+					(d2 + "").indexOf(".")));
+			Calendar nowss = Calendar.getInstance();
+			String datestr = nowss.get(Calendar.MONTH) + 1 + "."
+					+ nowss.get(Calendar.DAY_OF_MONTH);
+			bloodInfo.setDate(datestr);
+			DBService dbService = new DBService(MainActivity.this);
+			long l = dbService.insertModleData(bloodInfo);
+		}
+	}
+
 	
 }
