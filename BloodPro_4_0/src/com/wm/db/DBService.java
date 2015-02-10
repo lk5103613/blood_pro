@@ -28,11 +28,11 @@ public class DBService {
 		contentValues.put(DatabaseHelper.date,
 				materialInfo.getDate());
 		contentValues.put(DatabaseHelper.xinlv,
-				materialInfo.getXinlv());
+				materialInfo.getHeartRate());
 		contentValues.put(DatabaseHelper.shousuo,
-				materialInfo.getShousuo());
+				materialInfo.getSystolic());
 		contentValues.put(DatabaseHelper.shuzhang,
-				materialInfo.getShuzhang());
+				materialInfo.getDiastolic());
 		 long l=db.insert(DatabaseHelper.TABLE_NAME_MODLE, null, contentValues);
 		 db.close();
 		 return l;
@@ -73,9 +73,9 @@ public class DBService {
 			BloodInfo info = new BloodInfo();
 			info.setDate(cursor.getString(cursor.getColumnIndex(DatabaseHelper.date)));
 			info.setID(cursor.getInt(cursor.getColumnIndex(DatabaseHelper.ID)));
-			info.setShousuo(cursor.getString(cursor.getColumnIndex(DatabaseHelper.shousuo)));
-			info.setXinlv(cursor.getString(cursor.getColumnIndex(DatabaseHelper.xinlv)));
-			info.setShuzhang(cursor.getString(cursor.getColumnIndex(DatabaseHelper.shuzhang)));
+			info.setSystolic(cursor.getString(cursor.getColumnIndex(DatabaseHelper.shousuo)));
+			info.setHeartRate(cursor.getString(cursor.getColumnIndex(DatabaseHelper.xinlv)));
+			info.setDiastolic(cursor.getString(cursor.getColumnIndex(DatabaseHelper.shuzhang)));
 			lisMaterialInfos.add(info);    
 		}
 		cursor.close();

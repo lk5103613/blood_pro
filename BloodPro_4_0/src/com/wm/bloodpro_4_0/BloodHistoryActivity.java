@@ -59,11 +59,15 @@ public class BloodHistoryActivity extends ActionBarActivity {
 //		initvalues();
 
 		list = dbService.getAllModle();// get all history data
-
 		initPieChart();// init pie chart
 		initLineChart();// init line chart
-		setLineChartData();// set data entity
-		initPieChartCurt(list.size() - 1);
+		
+		if (!list.isEmpty()){
+			addEmptyData();
+			setLineChartData();//set data entity
+			initPieChartCurt(list.size() - 1);
+		}
+		
 	}
 
 	@Override
@@ -178,21 +182,24 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		mLineChart.setBorderPositions(new BorderPosition[] {
 				BorderPosition.BOTTOM, BorderPosition.LEFT });
 	}
-
-	public void setLineChartData() {
-
+	
+	public void addEmptyData(){
 		ArrayList<String> xVals = new ArrayList<String>();
 		for (int i = 0; i < list.size(); i++) {
 			xVals.add(list.get(i).getDate());
 		}
 
-		LineData data = new LineData(xVals);// create chart data object to save
-											// x values
+		LineData data = new LineData(xVals);// create chart data object to save xvalues
+		mLineChart.setData(data);
+		mLineChart.invalidate();
+	}
+
+	public void setLineChartData() {
 
 		ArrayList<Entry> shouSuoVals = new ArrayList<Entry>();
 		for (int i = 0; i < list.size(); i++) {
 			shouSuoVals.add(new Entry(Float
-					.parseFloat(list.get(i).getShousuo()), i));
+					.parseFloat(list.get(i).getSystolic()), i));
 		}
 
 		LineDataSet shouSoSet = new LineDataSet(shouSuoVals, getResources()
@@ -203,12 +210,12 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		shouSoSet.setCircleColor(getResources().getColor(R.color.green));
 		shouSoSet.setHighLightColor(getResources().getColor(R.color.green));
 
-		data.addDataSet(shouSoSet);
+		mLineChart.getData().addDataSet(shouSoSet);
 
 		ArrayList<Entry> shuZhangVals = new ArrayList<Entry>();
 		for (int i = 0; i < list.size(); i++) {
 			shuZhangVals.add(new Entry(Float.parseFloat(list.get(i)
-					.getShuzhang()), i));
+					.getDiastolic()), i));
 		}
 
 		LineDataSet shuZhangSet = new LineDataSet(shuZhangVals, getResources()
@@ -219,12 +226,12 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		shuZhangSet.setCircleColor(getResources().getColor(R.color.yellow));
 		shuZhangSet.setHighLightColor(getResources().getColor(R.color.yellow));
 
-		data.addDataSet(shuZhangSet);
+		mLineChart.getData().addDataSet(shuZhangSet);
 
 		ArrayList<Entry> xinLvVals = new ArrayList<Entry>();
 		for (int i = 0; i < list.size(); i++) {
 			xinLvVals
-					.add(new Entry(Float.parseFloat(list.get(i).getXinlv()), i));
+					.add(new Entry(Float.parseFloat(list.get(i).getHeartRate()), i));
 		}
 
 		LineDataSet xinLvSet = new LineDataSet(xinLvVals, getResources().getString(R.string.heart_rate));
@@ -234,8 +241,8 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		xinLvSet.setCircleColor(getResources().getColor(R.color.sky_blue));
 		xinLvSet.setHighLightColor(getResources().getColor(R.color.sky_blue));
 
-		data.addDataSet(xinLvSet);
-		mLineChart.setData(data);
+		mLineChart.getData().addDataSet(xinLvSet);
+		
 		mLineChart.animateY(1500);
 	}
 
@@ -246,13 +253,13 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		bloodInfo = new BloodInfo();
 		for (int i = 0; i < 10; i++) {
 			double d = Math.random() * 80 + 70;
-			bloodInfo.setXinlv((d + "").substring(0, (d + "").indexOf(".")));
+			bloodInfo.setHeartRate((d + "").substring(0, (d + "").indexOf(".")));
 			double d1 = Math.random() * 80 + 70;
 			bloodInfo
-					.setShousuo((d1 + "").substring(0, (d1 + "").indexOf(".")));
+					.setSystolic((d1 + "").substring(0, (d1 + "").indexOf(".")));
 			double d2 = Math.random() * 80 + 70;
 			bloodInfo
-					.setShuzhang((d2 + "").substring(0, (d2 + "").indexOf(".")));
+					.setDiastolic((d2 + "").substring(0, (d2 + "").indexOf(".")));
 			Calendar nowss = Calendar.getInstance();
 			String datestr = nowss.get(Calendar.MONTH) + 1 + "."
 					+ nowss.get(Calendar.DAY_OF_MONTH);
@@ -264,8 +271,8 @@ public class BloodHistoryActivity extends ActionBarActivity {
 	private void initPieChartCurt(int i) {
 		BloodInfo bloodIn = list.get(i);
 		int j = 0;
-		int shousuoValue = Integer.parseInt(bloodIn.getShousuo());
-		int shuzhangValue = Integer.parseInt(bloodIn.getShuzhang());
+		int shousuoValue = Integer.parseInt(bloodIn.getSystolic());
+		int shuzhangValue = Integer.parseInt(bloodIn.getDiastolic());
 		mPieChart.setCenterText(getResources().getString(R.string.idea_level));
 
 		if (90 < shousuoValue && shousuoValue < 120 && 60 < shuzhangValue
@@ -303,9 +310,9 @@ public class BloodHistoryActivity extends ActionBarActivity {
 
 			Toast.makeText(
 					BloodHistoryActivity.this,
-					"舒张压:" + list.get(e.getXIndex()).getShuzhang() + "   收缩压 :"
-							+ list.get(e.getXIndex()).getShousuo() + "   心率:"
-							+ list.get(e.getXIndex()).getXinlv(), Toast.LENGTH_LONG).show();
+					"舒张压:" + list.get(e.getXIndex()).getDiastolic() + "   收缩压 :"
+							+ list.get(e.getXIndex()).getSystolic() + "   心率:"
+							+ list.get(e.getXIndex()).getHeartRate(), Toast.LENGTH_LONG).show();
 			initPieChartCurt(e.getXIndex());
 		}
 
