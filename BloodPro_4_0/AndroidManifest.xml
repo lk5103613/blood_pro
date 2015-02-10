@@ -37,7 +37,11 @@
         </activity>
         
         <service android:name="com.wm.bloodpro_4_0.BluetoothLeService" android:enabled="true" />
-        
+        <receiver android:name="com.wm.receiver.BleStateReceiver">
+            <intent-filter >
+                <action android:name="android.bluetooth.adapter.action.STATE_CHANGED"/>
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
