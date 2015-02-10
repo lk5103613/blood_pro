@@ -77,8 +77,7 @@ public class MainActivity extends Activity {
 	private BluetoothGattCharacteristic mNotifyCharacteristic = null;
 	private BluetoothGattCharacteristic mInforCharacteristic = null;
 	private boolean mIsConnecting = false;
-	
-	
+	private final String mPressureInitValue = "000";
 	
 	@Override
 	protected void onResume() {
@@ -216,7 +215,7 @@ public class MainActivity extends Activity {
 	@OnClick(R.id.btn_detect_again)
 	public void detectAgain(View v) {
 		hideResult();
-		this.mLblCurrentPressure.setText("0");
+		this.mLblCurrentPressure.setText(mPressureInitValue);
 	}
 	
 	@OnClick(R.id.img_connect)
@@ -231,7 +230,7 @@ public class MainActivity extends Activity {
 		}
 		if(mConnected) {
 			scanFinish();
-			this.mLblCurrentPressure.setText("000");
+			this.mLblCurrentPressure.setText(mPressureInitValue);
 			this.mBluetoothLeService.disconnect();
 			String remindStr = getResources().getString(R.string.connect_broken);
 			Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
