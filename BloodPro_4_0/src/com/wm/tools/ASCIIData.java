@@ -3,6 +3,12 @@ package com.wm.tools;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * 
+ * °üº¬¹şÏ£¶ÔÕÕ±í
+ * @author Like
+ *
+ */
 public final class ASCIIData {
 	
 	private static final Map<String, String> ASCII_TABLE = new HashMap<>();

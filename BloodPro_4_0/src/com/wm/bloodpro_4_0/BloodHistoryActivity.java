@@ -9,6 +9,7 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.WindowManager;
 import android.widget.Toast;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -44,6 +45,8 @@ public class BloodHistoryActivity extends ActionBarActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+				WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		setContentView(R.layout.blood_history);
 		ButterKnife.inject(this);
 
@@ -56,18 +59,18 @@ public class BloodHistoryActivity extends ActionBarActivity {
 
 		mParties = getResources().getStringArray(R.array.result_level);
 		dbService = new DBService(BloodHistoryActivity.this);
-//		initvalues();
+//		 initvalues();
 
 		list = dbService.getAllModle();// get all history data
 		initPieChart();// init pie chart
 		initLineChart();// init line chart
-		
-		if (!list.isEmpty()){
+
+		if (!list.isEmpty()) {
 			addEmptyData();
-			setLineChartData();//set data entity
+			setLineChartData();// set data entity
 			initPieChartCurt(list.size() - 1);
 		}
-		
+
 	}
 
 	@Override
@@ -182,14 +185,15 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		mLineChart.setBorderPositions(new BorderPosition[] {
 				BorderPosition.BOTTOM, BorderPosition.LEFT });
 	}
-	
-	public void addEmptyData(){
+
+	public void addEmptyData() {
 		ArrayList<String> xVals = new ArrayList<String>();
 		for (int i = 0; i < list.size(); i++) {
 			xVals.add(list.get(i).getDate());
 		}
 
-		LineData data = new LineData(xVals);// create chart data object to save xvalues
+		LineData data = new LineData(xVals);// create chart data object to save
+											// xvalues
 		mLineChart.setData(data);
 		mLineChart.invalidate();
 	}
@@ -198,8 +202,8 @@ public class BloodHistoryActivity extends ActionBarActivity {
 
 		ArrayList<Entry> shouSuoVals = new ArrayList<Entry>();
 		for (int i = 0; i < list.size(); i++) {
-			shouSuoVals.add(new Entry(Float
-					.parseFloat(list.get(i).getSystolic()), i));
+			shouSuoVals.add(new Entry(Float.parseFloat(list.get(i)
+					.getSystolic()), i));
 		}
 
 		LineDataSet shouSoSet = new LineDataSet(shouSuoVals, getResources()
@@ -230,11 +234,12 @@ public class BloodHistoryActivity extends ActionBarActivity {
 
 		ArrayList<Entry> xinLvVals = new ArrayList<Entry>();
 		for (int i = 0; i < list.size(); i++) {
-			xinLvVals
-					.add(new Entry(Float.parseFloat(list.get(i).getHeartRate()), i));
+			xinLvVals.add(new Entry(Float
+					.parseFloat(list.get(i).getHeartRate()), i));
 		}
 
-		LineDataSet xinLvSet = new LineDataSet(xinLvVals, getResources().getString(R.string.heart_rate));
+		LineDataSet xinLvSet = new LineDataSet(xinLvVals, getResources()
+				.getString(R.string.heart_rate));
 		xinLvSet.setLineWidth(2.5f);
 		xinLvSet.setCircleSize(3f);
 		xinLvSet.setColor(getResources().getColor(R.color.sky_blue));
@@ -242,7 +247,7 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		xinLvSet.setHighLightColor(getResources().getColor(R.color.sky_blue));
 
 		mLineChart.getData().addDataSet(xinLvSet);
-		
+
 		mLineChart.animateY(1500);
 	}
 
@@ -253,13 +258,14 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		bloodInfo = new BloodInfo();
 		for (int i = 0; i < 10; i++) {
 			double d = Math.random() * 80 + 70;
-			bloodInfo.setHeartRate((d + "").substring(0, (d + "").indexOf(".")));
+			bloodInfo
+					.setHeartRate((d + "").substring(0, (d + "").indexOf(".")));
 			double d1 = Math.random() * 80 + 70;
 			bloodInfo
 					.setSystolic((d1 + "").substring(0, (d1 + "").indexOf(".")));
 			double d2 = Math.random() * 80 + 70;
-			bloodInfo
-					.setDiastolic((d2 + "").substring(0, (d2 + "").indexOf(".")));
+			bloodInfo.setDiastolic((d2 + "").substring(0,
+					(d2 + "").indexOf(".")));
 			Calendar nowss = Calendar.getInstance();
 			String datestr = nowss.get(Calendar.MONTH) + 1 + "."
 					+ nowss.get(Calendar.DAY_OF_MONTH);
@@ -281,21 +287,26 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		} else if (100 < shousuoValue && shousuoValue < 130
 				&& 60 < shuzhangValue && shuzhangValue < 90) {// 正常血压
 			j = 1;
-			mPieChart.setCenterText(getResources().getString(R.string.normal_level));
+			mPieChart.setCenterText(getResources().getString(
+					R.string.normal_level));
 		} else if (129 < shousuoValue && shousuoValue < 140
 				|| 84 < shuzhangValue && shuzhangValue < 90) {// 高血压前期
 			j = 3;
-			mPieChart.setCenterText(getResources().getString(R.string.before_high_pressure));
+			mPieChart.setCenterText(getResources().getString(
+					R.string.before_high_pressure));
 		} else if (140 < shousuoValue && 90 < shuzhangValue) {// 高血压
 			j = 4;
-			mPieChart.setCenterText(getResources().getString(R.string.high_pressure));
+			mPieChart.setCenterText(getResources().getString(
+					R.string.high_pressure));
 		} else if (shousuoValue <= 90 && shuzhangValue <= 60) {// 低血压
 			j = 2;
-			mPieChart.setCenterText(getResources().getString(R.string.low_pressure));
+			mPieChart.setCenterText(getResources().getString(
+					R.string.low_pressure));
 		} else if (140 < shousuoValue && shousuoValue < 160
 				&& 90 < shuzhangValue && shuzhangValue < 95) {// 临界高血压
 			j = 5;
-			mPieChart.setCenterText(getResources().getString(R.string.pre_high_pressure));
+			mPieChart.setCenterText(getResources().getString(
+					R.string.pre_high_pressure));
 		}
 		mPieChart.highlightValue(j, 0);
 	}
@@ -310,15 +321,16 @@ public class BloodHistoryActivity extends ActionBarActivity {
 
 			Toast.makeText(
 					BloodHistoryActivity.this,
-					"舒张压:" + list.get(e.getXIndex()).getDiastolic() + "   收缩压 :"
+					"舒张压:" + list.get(e.getXIndex()).getDiastolic()
+							+ "   收缩压 :"
 							+ list.get(e.getXIndex()).getSystolic() + "   心率:"
-							+ list.get(e.getXIndex()).getHeartRate(), Toast.LENGTH_LONG).show();
+							+ list.get(e.getXIndex()).getHeartRate(),
+					Toast.LENGTH_LONG).show();
 			initPieChartCurt(e.getXIndex());
 		}
 
 		@Override
 		public void onNothingSelected() {
-			// TODO Auto-generated method stub
 		}
 
 	}

@@ -37,6 +37,7 @@
     <string name="connect_broken">连接已经断开，请重新连接</string>
     <string name="connect_success">连接成功</string>
     <string name="connecting_now">正在连接中，请耐心等待</string>
+    <string name="no_history_data">还未进行过测量，没有数据</string>
     
     <string name="blood_cartogram">血压统计图</string>
     <string name="idea_level">理想血压</string>

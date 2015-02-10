@@ -146,7 +146,7 @@
         android:background="@drawable/result_bg"
         android:orientation="vertical"
         android:padding="5dp"
-        android:visibility="visible" >
+        android:visibility="invisible" >
 
         <RelativeLayout
             android:layout_width="match_parent"

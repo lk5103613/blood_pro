@@ -1,5 +1,6 @@
 package com.wm.bloodpro_4_0;
 
+import java.util.List;
 import java.util.UUID;
 
 import android.annotation.SuppressLint;
@@ -18,6 +19,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.ImageView;
@@ -28,6 +30,8 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 
+import com.wm.db.BloodInfo;
+import com.wm.db.DBService;
 import com.wm.task.InsertResultTask;
 import com.wm.tools.DataConvertUtils;
 import com.wm.tools.ProgressWheel;
@@ -82,8 +86,12 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+		// 如果设备蓝牙是关闭状态，请求打开
+		requestBluetooth();
 		registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 		registerReceiver(mBleStateReceiver, makeBleStateIntentFilter());
+		 getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+					WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		if (mBluetoothLeService != null) {
 			// 尝试连接BLE设备
 			mBluetoothLeService.connect(mDeviceAddress);
@@ -121,8 +129,7 @@ public class MainActivity extends Activity {
 			Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
 			finish();
 		}
-		// 如果设备蓝牙是关闭状态，请求打开
-		requestBluetooth();
+		
 		// 绑定蓝牙服务
 		Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
 		bindService(gattServiceIntent, mServiceConnection,
@@ -245,6 +252,12 @@ public class MainActivity extends Activity {
 
 	@OnClick(R.id.btn_history)
 	public void showHistory(View v) {
+		List<BloodInfo> infos = new DBService(mContext).getAllModle();
+		if(infos == null || infos.size() == 0) {
+			String msg = getResources().getString(R.string.no_history_data);
+			Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show();
+			return;
+		}
 		scanFinish();
 		Intent intent = new Intent(mContext, BloodHistoryActivity.class);
 		startActivity(intent);
@@ -373,11 +386,12 @@ public class MainActivity extends Activity {
 			} else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
 				// 从BLE设备获得数据并展示
 				String extraData = intent.getStringExtra(BluetoothLeService.EXTRA_DATA);
-				displayData(extraData);
+				handleData(extraData);
 			}
 		}
 	};
 	
+	// 监听手机蓝牙状态，如果中途关闭蓝牙，再次请求
 	private final BroadcastReceiver mBleStateReceiver = new BroadcastReceiver() {
 
 		@Override
@@ -395,14 +409,15 @@ public class MainActivity extends Activity {
 		return pressureH * 256 + pressureL + "";
 	}
 	
-	// 将从BLE设备获得的设备展示到应用中
-	private void displayData(String data) {
+	// 将从BLE设备获得的设备展示到应用中，如果数据正常，存入数据库
+	private void handleData(String data) {
 		if(data.trim().length() == 38) {
 			// 成功获得血压心率等数据
 			mNeedNewData = false;
 			mResultInfo = new ResultInfo(data);
 			showResult(mResultInfo.systolic, mResultInfo.diastolic, mResultInfo.heartRate);
-			new InsertResultTask(MainActivity.this, mResultInfo).execute();//insert to db
+			// 将数据存入数据库
+			new InsertResultTask(MainActivity.this, mResultInfo).execute();
 		} else if(data.trim().length() == 29) {
 			// 获得异常信息
 			mNeedNewData = false;

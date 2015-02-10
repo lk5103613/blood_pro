@@ -168,7 +168,7 @@ public class DeviceListActivity extends Activity implements OnItemClickListener 
 		}
 		BluetoothDevice device = mDevices.get(position);
 		Intent resultIntent = new Intent();
-		// 选择设备后，将数据放入intent中传递给<code>MainActivity</code>
+		// 选择设备后，将数据放入intent中传递给MainActivity
 		resultIntent.putExtra(DEVICE_ADDRESS, device.getAddress());
 		setResult(RESULT_OK, resultIntent);
 		finish();
