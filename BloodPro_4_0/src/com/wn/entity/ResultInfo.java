@@ -6,6 +6,12 @@ import java.util.Map;
 import com.wm.tools.ASCIIData;
 import com.wm.tools.DataConvertUtils;
 
+/**
+ * 
+ * 检测结果实体类
+ * @author Like
+ *
+ */
 public class ResultInfo {
 	
 	public static int HEART_RATE_STATE_NORMAL = 0;

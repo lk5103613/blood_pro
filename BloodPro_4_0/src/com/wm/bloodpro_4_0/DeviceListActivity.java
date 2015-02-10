@@ -25,6 +25,12 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 
+/**
+ * 
+ * 展示扫描结果列表的界面
+ * @author Like
+ * 
+ */
 public class DeviceListActivity extends Activity implements OnItemClickListener {
 	
 	@InjectView(R.id.device_list)
@@ -36,7 +42,7 @@ public class DeviceListActivity extends Activity implements OnItemClickListener 
 	
 	public static String DEVICE_ADDRESS = "device_address";
 	
-	// after SCAN_PERIOD ms, stop scan.
+	// 在SCAN_PERIOD之后，停止扫描
 	private static final long SCAN_PERIOD = 10000;
 	private Handler mHandler;
 	private boolean mScanning;
@@ -52,7 +58,7 @@ public class DeviceListActivity extends Activity implements OnItemClickListener 
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		setContentView(R.layout.activity_device_list);
 		ButterKnife.inject(this);
-		// init params
+		// 初始化参数
 		mHandler = new Handler();
 		this.mContext = DeviceListActivity.this;
 		mDevices = new ArrayList<BluetoothDevice>();
@@ -61,17 +67,23 @@ public class DeviceListActivity extends Activity implements OnItemClickListener 
 		final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
 		mBluetoothAdapter = bluetoothManager.getAdapter();
 		mDeviceList.setOnItemClickListener(this);
-		// begin scan
+		// 开始扫描 
 		scanLeDevice(true);
 	}
 	
+	/**
+	 * 控制扫描的开始与结束
+	 * @param enable 如果为true开始扫描，false结束扫描
+	 */
 	@SuppressWarnings("deprecation")
 	private void scanLeDevice(final boolean enable) {
 		if(enable) {
 			lblFoundDevice.setVisibility(View.GONE);
 			mDeviceAdapter.clear();
         	mDeviceAdapter.notifyDataSetChanged();
+        	mDevices.clear();
         	mProgressScanning.setVisibility(View.VISIBLE);
+        	// 在指定时间之后停止扫描
 			mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
@@ -79,6 +91,7 @@ public class DeviceListActivity extends Activity implements OnItemClickListener 
                     mBluetoothAdapter.stopLeScan(mLeScanCallback);
                     mProgressScanning.setVisibility(View.GONE);
                     if(mDeviceAdapter.getCount() == 0) {
+                    	lblFoundDevice.setVisibility(View.GONE);
                     	String notFoundDevice = getResources().getString(R.string.not_found_device);
                     	mDeviceAdapter.add(notFoundDevice);
                     	mDeviceAdapter.notifyDataSetChanged();
@@ -92,10 +105,10 @@ public class DeviceListActivity extends Activity implements OnItemClickListener 
 			lblFoundDevice.setVisibility(View.GONE);
 			mDeviceAdapter.clear();
         	mDeviceAdapter.notifyDataSetChanged();
-        	mProgressScanning.setVisibility(View.VISIBLE);
 			mScanning = false;
             mBluetoothAdapter.stopLeScan(mLeScanCallback);
             mProgressScanning.setVisibility(View.GONE);
+            // 如果没有扫到设备，显示没有找到设备
             if(mDeviceAdapter.getCount() == 0) {
             	String notFoundDevice = getResources().getString(R.string.not_found_device);
             	mDeviceAdapter.add(notFoundDevice);
@@ -116,6 +129,7 @@ public class DeviceListActivity extends Activity implements OnItemClickListener 
 					if(lblFoundDevice.getVisibility() == View.GONE) {
 						lblFoundDevice.setVisibility(View.VISIBLE);
 					}
+					// 将扫描到的设备添加到list中
 					if(!mDevices.contains(newDevice)) {
 						mDevices.add(newDevice);
 						mDeviceAdapter.add(deviceName + "\n" + address);
@@ -129,9 +143,11 @@ public class DeviceListActivity extends Activity implements OnItemClickListener 
 	@OnClick(R.id.btn_scan_device)
 	public void scan(View v) {
 		if(mScanning) {
+			// 如果正在扫描，提示正在扫描中
 			String remindStr = getResources().getString(R.string.scanning_now);
-			Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
+			Toast.makeText(mContext, remindStr, Toast.LENGTH_SHORT).show();
 		} else {
+			// 如果未在扫描，则开始扫描
 			scanLeDevice(true);
 		}
 	}
@@ -152,6 +168,7 @@ public class DeviceListActivity extends Activity implements OnItemClickListener 
 		}
 		BluetoothDevice device = mDevices.get(position);
 		Intent resultIntent = new Intent();
+		// 选择设备后，将数据放入intent中传递给<code>MainActivity</code>
 		resultIntent.putExtra(DEVICE_ADDRESS, device.getAddress());
 		setResult(RESULT_OK, resultIntent);
 		finish();

@@ -34,6 +34,12 @@ import com.wm.tools.Uuids;
 import com.wn.entity.ResultException;
 import com.wn.entity.ResultInfo;
 
+/**
+ * 
+ * 应用的主界面
+ * @author Like
+ * 
+ */
 public class MainActivity extends Activity {
 	
 	public static String TAG = "test";
@@ -76,8 +82,10 @@ public class MainActivity extends Activity {
 		super.onResume();
 		registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 		if (mBluetoothLeService != null) {
+			// 尝试连接BLE设备
 			final boolean result = mBluetoothLeService.connect(mDeviceAddress);
 			if(!result) {
+				// 如果连接失败，提示用户连接失败
 				String connectFailedStr = getResources().getString(R.string.connect_failed);
 				Toast.makeText(mContext, connectFailedStr, Toast.LENGTH_LONG).show();
 			}
@@ -100,18 +108,18 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		ButterKnife.inject(this);
-		// init params
+		// 初始化参数
 		mContext = MainActivity.this;
-		// if the device doesn't support ble, close the app.
+		// 如果设备不支持BLE，提示并关闭应用
 		if (!checkSupport()) {
 			String remindStr = getResources().getString(
 					R.string.remind_device_not_support);
 			Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
 			finish();
 		}
-		// if the ble is closed, request user to open.
+		// 如果设备蓝牙是关闭状态，请求打开
 		requestBluetooth();
-		
+		// 绑定蓝牙服务
 		Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
 		bindService(gattServiceIntent, mServiceConnection,
 				BIND_AUTO_CREATE);
@@ -120,6 +128,7 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onPause() {
 		super.onPause();
+		// 暂时离开主界面时，断开与蓝牙的连接
 		unregisterReceiver(mGattUpdateReceiver);
 		if(mConnected)
 			this.mBluetoothLeService.disconnect();
@@ -133,7 +142,7 @@ public class MainActivity extends Activity {
 		mBluetoothLeService = null;
 	}
 
-	// check the device support ble or not
+	// 检查设备是否支持BLE
 	private boolean checkSupport() {
 		if (!getPackageManager().hasSystemFeature(
 				PackageManager.FEATURE_BLUETOOTH_LE)) {
@@ -142,7 +151,7 @@ public class MainActivity extends Activity {
 		return true;
 	}
 
-	// request the access to the bluetooth
+	// 请求打开蓝牙
 	private void requestBluetooth() {
 		final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
 		mBluetoothAdapter = bluetoothManager.getAdapter();
@@ -155,27 +164,34 @@ public class MainActivity extends Activity {
 
 	@OnClick(R.id.progress_bar)
 	public void clickProgress(View v) {
+		// 点击开始检测后，隐藏结果界面
 		if(this.mResultContent.getVisibility() == View.VISIBLE) {
 			hideResult();
 		}
 		if(!mConnected) {
+			// 如果没有设备连接，提示请选择设备连接
 			String msg = getResources().getString(R.string.connect_device_first);
 			Toast.makeText(mContext, msg, Toast.LENGTH_LONG).show();
 			return;
 		}
 		if (mProgress.isSpinning()) {
+			// 当点击时正在检测，点击后停止检测
 			scanFinish();
 		} else {
+			// 点击后开始检测
 			mProgress.spin();
 			mProgress.setText("停止检测");
 			if(!beginDetect()) {
-				
+				// 如果扫描异常，停止扫描
+				scanFinish();
 			}
 		}
 	}
 	
+	// 开始检测
 	private boolean beginDetect() {
 		if(mInforCharacteristic == null) {
+			// 包含数据的characteristic为空，检测失败
 			return false;
 		}
 		mBluetoothLeService.setCharacteristicNotification(
@@ -184,6 +200,7 @@ public class MainActivity extends Activity {
 		return true;
 	}
 	
+	// 扫描结束或者停止扫描
 	private void scanFinish() {
 		mProgress.stopSpinning();
 		mProgress.setText("开始检测");
@@ -227,7 +244,7 @@ public class MainActivity extends Activity {
 		startActivity(intent);
 	}
 
-	// after detective finished, show the result view
+	// 检测结束后，展示结果
 	private void showResult(String systolic, String diastolic, String heartRate ) {
 		Animation translateAnimation = new TranslateAnimation(0.0f, 0.0f,
 				800.0f, 0.0f);
@@ -239,7 +256,7 @@ public class MainActivity extends Activity {
 		mResultContent.setVisibility(View.VISIBLE);
 	}
 
-	// after click the button, hide the result view
+	// 隐藏展示结果
 	private void hideResult() {
 		Animation translateAnimation = new TranslateAnimation(0.0f, 0.0f, 0.0f,
 				800.0f);
@@ -250,6 +267,7 @@ public class MainActivity extends Activity {
 
 	@Override
 	public void onBackPressed() {
+		// 连续点击两次返回键，退出程序
 		if (mBackClickTimes == 0) {
 			String str = getResources().getString(R.string.ask_when_exit);
 			Toast.makeText(mContext, str, Toast.LENGTH_LONG).show();
@@ -277,7 +295,7 @@ public class MainActivity extends Activity {
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 		if (requestCode == REQUEST_ENABLE_BT) {
-			// if user don't open ble, close the app
+			// 如果用户不同意打开蓝牙，关闭应用
 			if (resultCode == RESULT_CANCELED) {
 				String remindStr = getResources().getString(
 						R.string.remind_ble_must_open);
@@ -287,10 +305,12 @@ public class MainActivity extends Activity {
 		}
 		if (requestCode == REQUEST_GET_DEVICE) {
 			if (resultCode == RESULT_OK) {
+				// 用户选择设备后，获取设备的address
 				mDeviceAddress = data.getExtras().getString(
 						DeviceListActivity.DEVICE_ADDRESS);
 				mIsConnecting = true;
 			} else {
+				// 用户没有选择设备，提示用户选择设备连接
 				String str = getResources().getString(
 						R.string.connect_device_first);
 				Toast.makeText(mContext, str, Toast.LENGTH_LONG).show();
@@ -322,6 +342,7 @@ public class MainActivity extends Activity {
 		public void onReceive(Context context, Intent intent) {
 			final String action = intent.getAction();
 			if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
+				// 连接成功后，提示用户连接成功
 				mConnected = true;
 				mIsConnecting = false;
 				mImgConnect.setImageResource(R.drawable.ic_connected);
@@ -329,6 +350,7 @@ public class MainActivity extends Activity {
 				Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
 			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED
 					.equals(action)) {
+				// 连接断开，提示用户连接断开
 				mConnected = false;
 				mIsConnecting = false;
 				mImgConnect.setImageResource(R.drawable.ic_unconnect);
@@ -343,12 +365,14 @@ public class MainActivity extends Activity {
 				}
 				mInforCharacteristic = service.getCharacteristic(UUID.fromString(Uuids.RESULT_INFO));
 			} else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
+				// 从BLE设备获得数据并展示
 				String extraData = intent.getStringExtra(BluetoothLeService.EXTRA_DATA);
 				displayData(extraData);
 			}
 		}
 	};
 	
+	// 计算Pressure值
 	private String getPressureValue(String data) {
 		String[] items = data.split(" ");
 		int pressureH = Integer.valueOf(DataConvertUtils.hexToDecimal(items[2]));
@@ -356,16 +380,20 @@ public class MainActivity extends Activity {
 		return pressureH * 256 + pressureL + "";
 	}
 	
+	// 将从BLE设备获得的设备展示到应用中
 	private void displayData(String data) {
 		if(data.trim().length() == 38) {
+			// 成功获得血压心率等数据
 			mNeedNewData = false;
 			mResultInfo = new ResultInfo(data);
 			showResult(mResultInfo.systolic, mResultInfo.diastolic, mResultInfo.heartRate);
 		} else if(data.trim().length() == 29) {
+			// 获得异常信息
 			mNeedNewData = false;
 			mResultException = new ResultException(data);
 			Toast.makeText(mContext, mResultException.description, Toast.LENGTH_LONG).show();
 		} else if(data.trim().length() == 8) {
+			// 获得Pressure值
 			mNeedNewData = true;
 			String currentPressure = getPressureValue(data);
 			this.mLblCurrentPressure.setText(currentPressure);
@@ -375,6 +403,4 @@ public class MainActivity extends Activity {
 		}
 	}
 	
-	
-
 }

@@ -2,6 +2,12 @@ package com.wn.entity;
 
 import java.util.Locale;
 
+/**
+ * 
+ * 检测结果异常实体类
+ * @author Like
+ *
+ */
 public class ResultException {
 	
 	public String errorCode;
