@@ -3,9 +3,9 @@ package com.wm.db;
 public class BloodInfo {
 
 	private int ID;
-	private String xinlv;
-	private String shousuo;
-	private String shuzhang;
+	private String heartRate;
+	private String systolic;
+	private String diastolic;
 	private String date;
 	public int getID() {
 		return ID;
@@ -13,23 +13,23 @@ public class BloodInfo {
 	public void setID(int iD) {
 		ID = iD;
 	}
-	public String getXinlv() {
-		return xinlv;
+	public String getHeartRate() {
+		return heartRate;
 	}
-	public void setXinlv(String xinlv) {
-		this.xinlv = xinlv;
+	public void setHeartRate(String xinlv) {
+		this.heartRate = xinlv;
 	}
-	public String getShousuo() {
-		return shousuo;
+	public String getSystolic() {
+		return systolic;
 	}
-	public void setShousuo(String shousuo) {
-		this.shousuo = shousuo;
+	public void setSystolic(String shousuo) {
+		this.systolic = shousuo;
 	}
-	public String getShuzhang() {
-		return shuzhang;
+	public String getDiastolic() {
+		return diastolic;
 	}
-	public void setShuzhang(String shuzhang) {
-		this.shuzhang = shuzhang;
+	public void setDiastolic(String shuzhang) {
+		this.diastolic = shuzhang;
 	}
 	public String getDate() {
 		return date;

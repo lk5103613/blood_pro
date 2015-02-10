@@ -1,5 +1,6 @@
 package com.wm.bloodpro_4_0;
 
+import java.util.Calendar;
 import java.util.UUID;
 
 import android.annotation.SuppressLint;
@@ -28,6 +29,9 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 
+import com.wm.db.BloodInfo;
+import com.wm.db.DBService;
+import com.wm.task.InsertResultTask;
 import com.wm.tools.DataConvertUtils;
 import com.wm.tools.ProgressWheel;
 import com.wm.tools.Uuids;
@@ -77,6 +81,8 @@ public class MainActivity extends Activity {
 	private BluetoothGattCharacteristic mInforCharacteristic = null;
 	private boolean mIsConnecting = false;
 	
+	
+	
 	@Override
 	protected void onResume() {
 		super.onResume();
@@ -123,6 +129,7 @@ public class MainActivity extends Activity {
 		Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
 		bindService(gattServiceIntent, mServiceConnection,
 				BIND_AUTO_CREATE);
+		
 	}
 	
 	@Override
@@ -387,6 +394,7 @@ public class MainActivity extends Activity {
 			mNeedNewData = false;
 			mResultInfo = new ResultInfo(data);
 			showResult(mResultInfo.systolic, mResultInfo.diastolic, mResultInfo.heartRate);
+			new InsertResultTask(MainActivity.this, mResultInfo).execute();//insert to db
 		} else if(data.trim().length() == 29) {
 			// 获得异常信息
 			mNeedNewData = false;
