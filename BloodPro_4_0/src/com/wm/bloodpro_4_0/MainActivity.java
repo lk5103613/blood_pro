@@ -17,6 +17,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.view.View;
 import android.view.WindowManager;
@@ -82,6 +83,7 @@ public class MainActivity extends Activity {
 	private BluetoothGattCharacteristic mInforCharacteristic = null;
 	private boolean mIsConnecting = false;
 	private final String mPressureInitValue = "000";
+	private boolean mHiddingResult = false;
 	
 	@Override
 	protected void onResume() {
@@ -181,6 +183,12 @@ public class MainActivity extends Activity {
 		if(this.mResultContent.getVisibility() == View.VISIBLE) {
 			hideResult();
 		}
+		// 如果正在连接，显示正在连接，请耐心等待
+		if(mIsConnecting) {
+			String msg = getResources().getString(R.string.connecting_now);
+			Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show();
+			return;
+		}
 		if(!mConnected) {
 			// 如果没有设备连接，提示请选择设备连接
 			String msg = getResources().getString(R.string.connect_device_first);
@@ -224,8 +232,10 @@ public class MainActivity extends Activity {
 
 	@OnClick(R.id.btn_detect_again)
 	public void detectAgain(View v) {
-		hideResult();
-		this.mLblCurrentPressure.setText(mPressureInitValue);
+		if(!mHiddingResult) {
+			hideResult();
+			this.mLblCurrentPressure.setText(mPressureInitValue);
+		}
 	}
 	
 	@OnClick(R.id.img_connect)
@@ -277,6 +287,13 @@ public class MainActivity extends Activity {
 
 	// 隐藏展示结果
 	private void hideResult() {
+		mHiddingResult = true;
+		new Handler().postDelayed(new Runnable() {
+			@Override
+			public void run() {
+				mHiddingResult = false;
+			}
+		}, 1550);
 		Animation translateAnimation = new TranslateAnimation(0.0f, 0.0f, 0.0f,
 				800.0f);
 		translateAnimation.setDuration(1500);
