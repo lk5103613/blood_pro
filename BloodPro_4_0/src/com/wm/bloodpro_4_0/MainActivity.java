@@ -83,14 +83,10 @@ public class MainActivity extends Activity {
 	protected void onResume() {
 		super.onResume();
 		registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
+		registerReceiver(mBleStateReceiver, makeBleStateIntentFilter());
 		if (mBluetoothLeService != null) {
 			// 尝试连接BLE设备
-			final boolean result = mBluetoothLeService.connect(mDeviceAddress);
-			if(!result) {
-				// 如果连接失败，提示用户连接失败
-				String connectFailedStr = getResources().getString(R.string.connect_failed);
-				Toast.makeText(mContext, connectFailedStr, Toast.LENGTH_LONG).show();
-			}
+			mBluetoothLeService.connect(mDeviceAddress);
 		}
 	}
 	
@@ -101,6 +97,12 @@ public class MainActivity extends Activity {
 		intentFilter
 				.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
 		intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
+		return intentFilter;
+	}
+	
+	private static IntentFilter makeBleStateIntentFilter() {
+		final IntentFilter intentFilter = new IntentFilter();
+		intentFilter.addAction("android.bluetooth.adapter.action.STATE_CHANGED");
 		return intentFilter;
 	}
 
@@ -133,6 +135,7 @@ public class MainActivity extends Activity {
 		super.onPause();
 		// 暂时离开主界面时，断开与蓝牙的连接
 		unregisterReceiver(mGattUpdateReceiver);
+		unregisterReceiver(mBleStateReceiver);
 		if(mConnected)
 			this.mBluetoothLeService.disconnect();
 	}
@@ -373,6 +376,15 @@ public class MainActivity extends Activity {
 				displayData(extraData);
 			}
 		}
+	};
+	
+	private final BroadcastReceiver mBleStateReceiver = new BroadcastReceiver() {
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			requestBluetooth();
+		}
+		
 	};
 	
 	// 计算Pressure值
