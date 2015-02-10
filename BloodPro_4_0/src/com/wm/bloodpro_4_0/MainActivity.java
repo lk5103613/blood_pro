@@ -136,7 +136,7 @@ public class MainActivity extends Activity {
 		bindService(gattServiceIntent, mServiceConnection,
 				BIND_AUTO_CREATE);
 		
-		initvalues();//添加测试数据
+//		initvalues();//添加测试数据
 		
 	}
 	
