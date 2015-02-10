@@ -30,14 +30,13 @@ public class BluetoothLeService extends Service {
 	private BluetoothAdapter mBluetoothAdapter;
 	private String mBluetoothDeviceAddress;
 	private BluetoothGatt mBluetoothGatt;
-	@SuppressWarnings("unused")
 	private int mConnectionState = STATE_DISCONNECTED;
 	private final IBinder mBinder = new LocalBinder();
 	
 	// 连接状态
-	private static final int STATE_DISCONNECTED = 0;
-	private static final int STATE_CONNECTING = 1;
-	private static final int STATE_CONNECTED = 2;
+	public static final int STATE_DISCONNECTED = 0;
+	public static final int STATE_CONNECTING = 1;
+	public static final int STATE_CONNECTED = 2;
 	
 	public final static String ACTION_GATT_CONNECTED = "com.wm.bluetooth.le.ACTION_GATT_CONNECTED";
 	public final static String ACTION_GATT_DISCONNECTED = "com.wm.bluetooth.le.ACTION_GATT_DISCONNECTED";
@@ -165,23 +164,26 @@ public class BluetoothLeService extends Service {
 	// 根据address连接设备
 	public boolean connect(final String address) {
 		if (mBluetoothAdapter == null || address == null) {
+			mConnectionState = STATE_DISCONNECTED;
+			return false;
+		}
+		final BluetoothDevice device = mBluetoothAdapter
+				.getRemoteDevice(address);
+		if (device == null) {
+			mConnectionState = STATE_DISCONNECTED;
 			return false;
 		}
 		if (mBluetoothDeviceAddress != null
 				&& address.equals(mBluetoothDeviceAddress)
 				&& mBluetoothGatt != null) {
 			if (mBluetoothGatt.connect()) {
+				System.out.println("this");
 				mConnectionState = STATE_CONNECTING;
 				return true;
 			} else {
+				mConnectionState = STATE_DISCONNECTED;
 				return false;
 			}
-		}
-
-		final BluetoothDevice device = mBluetoothAdapter
-				.getRemoteDevice(address);
-		if (device == null) {
-			return false;
 		}
 		mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
 		mBluetoothDeviceAddress = address;
@@ -195,6 +197,7 @@ public class BluetoothLeService extends Service {
 			return;
 		}
 		mBluetoothGatt.disconnect();
+		mConnectionState = STATE_DISCONNECTED;
 		mBluetoothGatt.close();
 		mBluetoothGatt = null;
 	}
@@ -232,6 +235,7 @@ public class BluetoothLeService extends Service {
 	
 	// 断开连接
 	public void disconnect() {
+		this.mConnectionState = STATE_DISCONNECTED;
 		if(mBluetoothGatt == null) {
 			return;
 		}
@@ -252,5 +256,9 @@ public class BluetoothLeService extends Service {
 			mBluetoothGatt.writeDescriptor(descriptor);
 		}
 		mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
+	}
+	
+	public int getConnectState() {
+		return mConnectionState;
 	}
 }

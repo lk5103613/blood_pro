@@ -1,6 +1,5 @@
 package com.wm.bloodpro_4_0;
 
-import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 
@@ -44,13 +43,14 @@ import com.wn.entity.ResultInfo;
 /**
  * 
  * 应用的主界面
+ * 
  * @author Like
  * 
  */
 public class MainActivity extends Activity {
-	
+
 	public static String TAG = "test";
-	
+
 	// request code to open bluetooth
 	public static int REQUEST_ENABLE_BT = 1;
 	// request code of connect device
@@ -70,22 +70,21 @@ public class MainActivity extends Activity {
 	TextView mLblDiastolic;
 	@InjectView(R.id.lbl_current_pressure)
 	TextView mLblCurrentPressure;
-	
+
 	private Context mContext;
 	private BluetoothAdapter mBluetoothAdapter;
 	private String mDeviceAddress;
 	private int mBackClickTimes = 0;
 	private BluetoothLeService mBluetoothLeService;
-	private boolean mConnected = false;
 	private ResultInfo mResultInfo = null;
 	private ResultException mResultException = null;
 	private boolean mNeedNewData = true;
 	private BluetoothGattCharacteristic mNotifyCharacteristic = null;
 	private BluetoothGattCharacteristic mInforCharacteristic = null;
-	private boolean mIsConnecting = false;
 	private final String mPressureInitValue = "000";
 	private boolean mHiddingResult = false;
-	
+	private Handler mHandler;
+
 	@Override
 	protected void onResume() {
 		super.onResume();
@@ -93,14 +92,26 @@ public class MainActivity extends Activity {
 		requestBluetooth();
 		registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 		registerReceiver(mBleStateReceiver, makeBleStateIntentFilter());
-		 getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-					WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+				WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		if (mBluetoothLeService != null) {
 			// 尝试连接BLE设备
 			mBluetoothLeService.connect(mDeviceAddress);
+			
+			mHandler.postDelayed(new Runnable() {
+				@Override
+				public void run() {
+					if(isConnecting()) {
+						mBluetoothLeService.disconnect();
+						String remindStr = getResources().getString(
+								R.string.connect_timeout);
+						Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
+					}
+				}
+			}, 10000);
 		}
 	}
-	
+
 	private static IntentFilter makeGattUpdateIntentFilter() {
 		final IntentFilter intentFilter = new IntentFilter();
 		intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
@@ -110,10 +121,11 @@ public class MainActivity extends Activity {
 		intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
 		return intentFilter;
 	}
-	
+
 	private static IntentFilter makeBleStateIntentFilter() {
 		final IntentFilter intentFilter = new IntentFilter();
-		intentFilter.addAction("android.bluetooth.adapter.action.STATE_CHANGED");
+		intentFilter
+				.addAction("android.bluetooth.adapter.action.STATE_CHANGED");
 		return intentFilter;
 	}
 
@@ -125,6 +137,7 @@ public class MainActivity extends Activity {
 		ButterKnife.inject(this);
 		// 初始化参数
 		mContext = MainActivity.this;
+		mHandler = new Handler();
 		// 如果设备不支持BLE，提示并关闭应用
 		if (!checkSupport()) {
 			String remindStr = getResources().getString(
@@ -132,30 +145,29 @@ public class MainActivity extends Activity {
 			Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
 			finish();
 		}
-		
+
 		// 绑定蓝牙服务
 		Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
-		bindService(gattServiceIntent, mServiceConnection,
-				BIND_AUTO_CREATE);
-		
-//		initvalues();//添加测试数据
-		
+		bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+
+		// initvalues();//添加测试数据
+
 	}
-	
+
 	@Override
 	protected void onPause() {
 		super.onPause();
 		// 暂时离开主界面时，断开与蓝牙的连接
 		unregisterReceiver(mGattUpdateReceiver);
 		unregisterReceiver(mBleStateReceiver);
-		if(mConnected)
+		if (isConnected())
 			this.mBluetoothLeService.disconnect();
 	}
 
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		if(mBluetoothLeService != null && mServiceConnection != null)
+		if (mBluetoothLeService != null && mServiceConnection != null)
 			unbindService(mServiceConnection);
 		mBluetoothLeService = null;
 	}
@@ -183,18 +195,19 @@ public class MainActivity extends Activity {
 	@OnClick(R.id.progress_bar)
 	public void clickProgress(View v) {
 		// 点击开始检测后，隐藏结果界面
-		if(this.mResultContent.getVisibility() == View.VISIBLE) {
+		if (this.mResultContent.getVisibility() == View.VISIBLE) {
 			hideResult();
 		}
 		// 如果正在连接，显示正在连接，请耐心等待
-		if(mIsConnecting) {
+		if (isConnecting()) {
 			String msg = getResources().getString(R.string.connecting_now);
 			Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show();
 			return;
 		}
-		if(!mConnected) {
+		if (!isConnected()) {
 			// 如果没有设备连接，提示请选择设备连接
-			String msg = getResources().getString(R.string.connect_device_first);
+			String msg = getResources()
+					.getString(R.string.connect_device_first);
 			Toast.makeText(mContext, msg, Toast.LENGTH_LONG).show();
 			return;
 		}
@@ -205,57 +218,59 @@ public class MainActivity extends Activity {
 			// 点击后开始检测
 			mProgress.spin();
 			mProgress.setText("停止检测");
-			if(!beginDetect()) {
+			if (!beginDetect()) {
 				// 如果扫描异常，停止扫描
 				scanFinish();
 			}
 		}
 	}
-	
+
 	// 开始检测
 	private boolean beginDetect() {
-		if(mInforCharacteristic == null) {
+		if (mInforCharacteristic == null) {
 			// 包含数据的characteristic为空，检测失败
 			return false;
 		}
-		mBluetoothLeService.setCharacteristicNotification(
-				mInforCharacteristic, true);
+		mBluetoothLeService.setCharacteristicNotification(mInforCharacteristic,
+				true);
 		mNotifyCharacteristic = mInforCharacteristic;
 		return true;
 	}
-	
+
 	// 扫描结束或者停止扫描
 	private void scanFinish() {
 		mProgress.stopSpinning();
 		mProgress.setText("开始检测");
-		if(mNotifyCharacteristic != null)
-			mBluetoothLeService.setCharacteristicNotification(mNotifyCharacteristic, false);
+		if (mNotifyCharacteristic != null)
+			mBluetoothLeService.setCharacteristicNotification(
+					mNotifyCharacteristic, false);
 		mNotifyCharacteristic = null;
 	}
 
 	@OnClick(R.id.btn_detect_again)
 	public void detectAgain(View v) {
-		if(!mHiddingResult) {
+		if (!mHiddingResult) {
 			hideResult();
 			this.mLblCurrentPressure.setText(mPressureInitValue);
 		}
 	}
-	
+
 	@OnClick(R.id.img_connect)
 	public void showDeviceList(View v) {
-		if(this.mResultContent.getVisibility() == View.VISIBLE) {
+		if (this.mResultContent.getVisibility() == View.VISIBLE) {
 			hideResult();
 		}
-		if(mIsConnecting) {
+		if (isConnecting()) {
 			String msg = getResources().getString(R.string.connecting_now);
 			Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show();
 			return;
 		}
-		if(mConnected) {
+		if (isConnected()) {
 			scanFinish();
 			this.mLblCurrentPressure.setText(mPressureInitValue);
 			this.mBluetoothLeService.disconnect();
-			String remindStr = getResources().getString(R.string.connect_broken);
+			String remindStr = getResources()
+					.getString(R.string.connect_broken);
 			Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
 		} else {
 			Intent intent = new Intent(mContext, DeviceListActivity.class);
@@ -266,7 +281,7 @@ public class MainActivity extends Activity {
 	@OnClick(R.id.btn_history)
 	public void showHistory(View v) {
 		List<BloodInfo> infos = new DBService(mContext).getAllModle();
-		if(infos == null || infos.size() == 0) {
+		if (infos == null || infos.size() == 0) {
 			String msg = getResources().getString(R.string.no_history_data);
 			Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show();
 			return;
@@ -277,7 +292,7 @@ public class MainActivity extends Activity {
 	}
 
 	// 检测结束后，展示结果
-	private void showResult(String systolic, String diastolic, String heartRate ) {
+	private void showResult(String systolic, String diastolic, String heartRate) {
 		Animation translateAnimation = new TranslateAnimation(0.0f, 0.0f,
 				800.0f, 0.0f);
 		translateAnimation.setDuration(1500);
@@ -291,7 +306,7 @@ public class MainActivity extends Activity {
 	// 隐藏展示结果
 	private void hideResult() {
 		mHiddingResult = true;
-		new Handler().postDelayed(new Runnable() {
+		mHandler.postDelayed(new Runnable() {
 			@Override
 			public void run() {
 				mHiddingResult = false;
@@ -347,7 +362,6 @@ public class MainActivity extends Activity {
 				// 用户选择设备后，获取设备的address
 				mDeviceAddress = data.getExtras().getString(
 						DeviceListActivity.DEVICE_ADDRESS);
-				mIsConnecting = true;
 			} else {
 				// 用户没有选择设备，提示用户选择设备连接
 				String str = getResources().getString(
@@ -356,7 +370,7 @@ public class MainActivity extends Activity {
 			}
 		}
 	}
-	
+
 	private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
 		@Override
@@ -375,42 +389,43 @@ public class MainActivity extends Activity {
 			mBluetoothLeService = null;
 		}
 	};
-	
+
 	private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			final String action = intent.getAction();
 			if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
 				// 连接成功后，提示用户连接成功
-				mConnected = true;
-				mIsConnecting = false;
 				mImgConnect.setImageResource(R.drawable.ic_connected);
-				String remindStr = getResources().getString(R.string.connect_success);
+				String remindStr = getResources().getString(
+						R.string.connect_success);
 				Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
 			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED
 					.equals(action)) {
 				// 连接断开，提示用户连接断开
-				mConnected = false;
-				mIsConnecting = false;
 				mImgConnect.setImageResource(R.drawable.ic_unconnect);
 				scanFinish();
-				String remindStr = getResources().getString(R.string.connect_broken);
+				String remindStr = getResources().getString(
+						R.string.connect_broken);
 				Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
 			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED
 					.equals(action)) {
-				BluetoothGattService service = mBluetoothLeService.getServiceByUuid(Uuids.RESULT_INFO_SERVICE);
-				if(service == null) {
+				BluetoothGattService service = mBluetoothLeService
+						.getServiceByUuid(Uuids.RESULT_INFO_SERVICE);
+				if (service == null) {
 					return;
 				}
-				mInforCharacteristic = service.getCharacteristic(UUID.fromString(Uuids.RESULT_INFO));
+				mInforCharacteristic = service.getCharacteristic(UUID
+						.fromString(Uuids.RESULT_INFO));
 			} else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
 				// 从BLE设备获得数据并展示
-				String extraData = intent.getStringExtra(BluetoothLeService.EXTRA_DATA);
+				String extraData = intent
+						.getStringExtra(BluetoothLeService.EXTRA_DATA);
 				handleData(extraData);
 			}
 		}
 	};
-	
+
 	// 监听手机蓝牙状态，如果中途关闭蓝牙，再次请求
 	private final BroadcastReceiver mBleStateReceiver = new BroadcastReceiver() {
 
@@ -418,65 +433,53 @@ public class MainActivity extends Activity {
 		public void onReceive(Context context, Intent intent) {
 			requestBluetooth();
 		}
-		
+
 	};
-	
+
 	// 计算Pressure值
 	private String getPressureValue(String data) {
 		String[] items = data.split(" ");
-		int pressureH = Integer.valueOf(DataConvertUtils.hexToDecimal(items[2]));
-		int pressureL = Integer.valueOf(DataConvertUtils.hexToDecimal(items[1]));
+		int pressureH = Integer
+				.valueOf(DataConvertUtils.hexToDecimal(items[2]));
+		int pressureL = Integer
+				.valueOf(DataConvertUtils.hexToDecimal(items[1]));
 		return pressureH * 256 + pressureL + "";
 	}
-	
+
 	// 将从BLE设备获得的设备展示到应用中，如果数据正常，存入数据库
 	private void handleData(String data) {
-		if(data.trim().length() == 38) {
+		if (data.trim().length() == 38) {
 			// 成功获得血压心率等数据
 			mNeedNewData = false;
 			mResultInfo = new ResultInfo(data);
-			showResult(mResultInfo.systolic, mResultInfo.diastolic, mResultInfo.heartRate);
+			showResult(mResultInfo.systolic, mResultInfo.diastolic,
+					mResultInfo.heartRate);
 			// 将数据存入数据库
 			new InsertResultTask(MainActivity.this, mResultInfo).execute();
-		} else if(data.trim().length() == 29) {
+		} else if (data.trim().length() == 29) {
 			// 获得异常信息
 			mNeedNewData = false;
 			mResultException = new ResultException(data);
-			Toast.makeText(mContext, mResultException.description, Toast.LENGTH_LONG).show();
-		} else if(data.trim().length() == 8) {
+			Toast.makeText(mContext, mResultException.description,
+					Toast.LENGTH_LONG).show();
+		} else if (data.trim().length() == 8) {
 			// 获得Pressure值
 			mNeedNewData = true;
 			String currentPressure = getPressureValue(data);
 			this.mLblCurrentPressure.setText(currentPressure);
 		}
-		if(!mNeedNewData) {
+		if (!mNeedNewData) {
 			scanFinish();
 		}
 	}
+
+	// 如果正在连接返回true，否则返回false
+	private boolean isConnecting() {
+		return this.mBluetoothLeService.getConnectState() == BluetoothLeService.STATE_CONNECTING;
+	}
 	
-	/**
-	 * insert simulate data
-	 */
-	private void initvalues() {
-		BloodInfo bloodInfo = new BloodInfo();
-		for (int i = 0; i < 2; i++) {
-			double d = Math.random() * 80 + 70;
-			bloodInfo
-					.setHeartRate((d + "").substring(0, (d + "").indexOf(".")));
-			double d1 = Math.random() * 80 + 70;
-			bloodInfo
-					.setSystolic((d1 + "").substring(0, (d1 + "").indexOf(".")));
-			double d2 = Math.random() * 80 + 70;
-			bloodInfo.setDiastolic((d2 + "").substring(0,
-					(d2 + "").indexOf(".")));
-			Calendar nowss = Calendar.getInstance();
-			String datestr = nowss.get(Calendar.MONTH) + 1 + "."
-					+ nowss.get(Calendar.DAY_OF_MONTH);
-			bloodInfo.setDate(datestr);
-			DBService dbService = new DBService(MainActivity.this);
-			long l = dbService.insertModleData(bloodInfo);
-		}
+	private boolean isConnected() {
+		return this.mBluetoothLeService.getConnectState() == BluetoothLeService.STATE_CONNECTED;
 	}
 
-	
 }
