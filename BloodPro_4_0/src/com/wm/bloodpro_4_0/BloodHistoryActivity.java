@@ -37,7 +37,6 @@ public class BloodHistoryActivity extends ActionBarActivity {
 	@InjectView(R.id.blood_history_pie)
 	PieChart mPieChart;
 
-	private BloodInfo bloodInfo;
 	private DBService dbService;
 	private List<BloodInfo> list;
 	private String[] mParties;
@@ -59,15 +58,14 @@ public class BloodHistoryActivity extends ActionBarActivity {
 
 		mParties = getResources().getStringArray(R.array.result_level);
 		dbService = new DBService(BloodHistoryActivity.this);
-//		 initvalues();
 
-		list = dbService.getAllModle();// get all history data
-		initPieChart();// init pie chart
-		initLineChart();// init line chart
+		list = dbService.getAllModle();// 获取历史记录
+		initPieChart();// 初始化饼图
+		initLineChart();// 初始化线形图
 
 		if (!list.isEmpty()) {
 			addEmptyData();
-			setLineChartData();// set data entity
+			setLineChartData();//为线形图设置数据
 			initPieChartCurt(list.size() - 1);
 		}
 
@@ -82,6 +80,9 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		}
 	}
 
+	/**
+	 * 初始化饼图
+	 */
 	private void initPieChart() {
 		mPieChart.setHoleColor(Color.rgb(235, 235, 235));
 
@@ -107,7 +108,7 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		mPieChart.setCenterText(getResources().getString(R.string.idea_level));
 		mPieChart.setCenterTextSize(20);
 		mPieChart.setEnabled(false);
-		setData(5, 100);
+		setData(5);
 
 		mPieChart.animateXY(1500, 1500);
 
@@ -120,7 +121,12 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		mPieChart.setDrawXValues(false);
 	}
 
-	private void setData(int count, float range) {
+	/**
+	 * 设置饼图数据
+	 * 
+	 * @param count
+	 */
+	private void setData(int count) {
 
 		ArrayList<Entry> yVals1 = new ArrayList<Entry>();
 
@@ -141,7 +147,7 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		PieDataSet set1 = new PieDataSet(yVals1, "");
 		set1.setSliceSpace(3f);
 
-		// add a lot of colors
+		//添加颜色
 		ArrayList<Integer> colors = new ArrayList<Integer>();
 
 		for (int c : ColorTemplate.VORDIPLOM_COLORS)
@@ -166,10 +172,13 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		PieData data = new PieData(xVals, set1);
 		mPieChart.setData(data);
 		mPieChart.setOverScrollMode(1);
-		mPieChart.highlightValues(null);// undo all highlights
+		mPieChart.highlightValues(null);
 		mPieChart.invalidate();
 	}
 
+	/**
+	 * 初始化线形图
+	 */
 	private void initLineChart() {
 		mLineChart = (LineChart) findViewById(R.id.blood_history_line_chart);
 		mLineChart
@@ -180,32 +189,49 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		mLineChart.setDragEnabled(true);
 		mLineChart.setSaveEnabled(true);
 		mLineChart.setStartAtZero(false);
-		mLineChart.setScaleMinima(list.size() / 10, 1);// set scale
+		mLineChart.setScaleMinima(list.size() / 10, 1);// 设置缩放比例
+		
 		mLineChart.setDrawBorder(true);
 		mLineChart.setBorderPositions(new BorderPosition[] {
 				BorderPosition.BOTTOM, BorderPosition.LEFT });
 	}
 
+	/**
+	 * 添加X轴
+	 */
 	public void addEmptyData() {
 		ArrayList<String> xVals = new ArrayList<String>();
 		for (int i = 0; i < list.size(); i++) {
 			xVals.add(list.get(i).getDate());
 		}
+		
+		//如果数据量多少，手动添加x轴的值
+		if (list.size() < 8) {
+			for (int i = 1; i < 8-list.size(); i++) {
+				Calendar nowss = Calendar.getInstance();
+				String datestr = nowss.get(Calendar.MONTH) + 1 + "."
+						+ (nowss.get(Calendar.DAY_OF_MONTH)+i);
+				xVals.add(datestr);
+			}
+		}
 
-		LineData data = new LineData(xVals);// create chart data object to save
-											// xvalues
+		LineData data = new LineData(xVals);// 保存 x轴的值
 		mLineChart.setData(data);
 		mLineChart.invalidate();
 	}
 
+	/**
+	 * 填充线形图数据
+	 */
 	public void setLineChartData() {
 
+		//收缩压数据集
 		ArrayList<Entry> shouSuoVals = new ArrayList<Entry>();
 		for (int i = 0; i < list.size(); i++) {
 			shouSuoVals.add(new Entry(Float.parseFloat(list.get(i)
 					.getSystolic()), i));
 		}
-
+		
 		LineDataSet shouSoSet = new LineDataSet(shouSuoVals, getResources()
 				.getString(R.string.systolic));
 		shouSoSet.setLineWidth(2.5f);
@@ -216,6 +242,7 @@ public class BloodHistoryActivity extends ActionBarActivity {
 
 		mLineChart.getData().addDataSet(shouSoSet);
 
+		//舒张压数据集
 		ArrayList<Entry> shuZhangVals = new ArrayList<Entry>();
 		for (int i = 0; i < list.size(); i++) {
 			shuZhangVals.add(new Entry(Float.parseFloat(list.get(i)
@@ -232,6 +259,7 @@ public class BloodHistoryActivity extends ActionBarActivity {
 
 		mLineChart.getData().addDataSet(shuZhangSet);
 
+		//心率数据集
 		ArrayList<Entry> xinLvVals = new ArrayList<Entry>();
 		for (int i = 0; i < list.size(); i++) {
 			xinLvVals.add(new Entry(Float
@@ -247,33 +275,13 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		xinLvSet.setHighLightColor(getResources().getColor(R.color.sky_blue));
 
 		mLineChart.getData().addDataSet(xinLvSet);
-
-		mLineChart.animateY(1500);
+		mLineChart.animateY(1500);//设置Y轴动画 毫秒
 	}
 
 	/**
-	 * insert simulate data
+	 * 初始化当前 线形图数据项对应的 饼图
+	 * @param i, 线形图 数据项的索引
 	 */
-	private void initvalues() {
-		bloodInfo = new BloodInfo();
-		for (int i = 0; i < 10; i++) {
-			double d = Math.random() * 80 + 70;
-			bloodInfo
-					.setHeartRate((d + "").substring(0, (d + "").indexOf(".")));
-			double d1 = Math.random() * 80 + 70;
-			bloodInfo
-					.setSystolic((d1 + "").substring(0, (d1 + "").indexOf(".")));
-			double d2 = Math.random() * 80 + 70;
-			bloodInfo.setDiastolic((d2 + "").substring(0,
-					(d2 + "").indexOf(".")));
-			Calendar nowss = Calendar.getInstance();
-			String datestr = nowss.get(Calendar.MONTH) + 1 + "."
-					+ nowss.get(Calendar.DAY_OF_MONTH);
-			bloodInfo.setDate(datestr);
-			long l = dbService.insertModleData(bloodInfo);
-		}
-	}
-
 	private void initPieChartCurt(int i) {
 		BloodInfo bloodIn = list.get(i);
 		int j = 0;
@@ -311,6 +319,11 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		mPieChart.highlightValue(j, 0);
 	}
 
+	/**
+	 * 线形图 数据项 点击事件
+	 * @author MGC01
+	 *
+	 */
 	private class MChartValueSelectedListener implements
 			OnChartValueSelectedListener {
 
