@@ -114,7 +114,9 @@ public class MainActivity extends Activity {
 		registerReceiver(mBleStateReceiver, makeBleStateIntentFilter());
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 				WindowManager.LayoutParams.FLAG_FULLSCREEN);
-		
+		if(isConnected()) {
+			return;
+		}
 		if (mBluetoothLeService != null && mDeviceAddress != null) {
 			// 尝试连接BLE设备
 			mBluetoothLeService.connect(mDeviceAddress);
@@ -460,6 +462,7 @@ public class MainActivity extends Activity {
 		scanFinish();
 		mDeviceAddress = null;
 		mImgConnect.setImageResource(R.drawable.ic_unconnect);
+		mLblCurrentPressure.setText(mPressureInitValue);
 		if (isConnected())
 			this.mBluetoothLeService.disconnect();
 	}
