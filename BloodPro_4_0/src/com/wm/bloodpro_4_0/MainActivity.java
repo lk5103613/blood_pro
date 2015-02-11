@@ -396,12 +396,10 @@ public class MainActivity extends Activity {
 
 	// 监听手机蓝牙状态，如果中途关闭蓝牙，再次请求
 	private final BroadcastReceiver mBleStateReceiver = new BroadcastReceiver() {
-
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			requestBluetooth();
 		}
-
 	};
 	
 	private static IntentFilter makeGattUpdateIntentFilter() {
@@ -458,6 +456,7 @@ public class MainActivity extends Activity {
 		}
 	}
 	
+	// 当从此activity跳转到其他activity时执行
 	private void leave() {
 		scanFinish();
 		mDeviceAddress = null;
@@ -469,10 +468,17 @@ public class MainActivity extends Activity {
 
 	// 如果正在连接返回true，否则返回false
 	private boolean isConnecting() {
+		if(this.mBluetoothLeService == null) {
+			return false;
+		}
 		return this.mBluetoothLeService.getConnectState() == BluetoothLeService.STATE_CONNECTING;
 	}
 	
+	// 如果当前状态为已连接，返回true，否则返回false
 	private boolean isConnected() {
+		if(this.mBluetoothLeService == null) {
+			return false;
+		}
 		return this.mBluetoothLeService.getConnectState() == BluetoothLeService.STATE_CONNECTED;
 	}
 
