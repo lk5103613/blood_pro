@@ -231,7 +231,8 @@ public class MainActivity extends Activity {
 
 	@OnClick(R.id.btn_detect_again)
 	public void detectAgain(View v) {
-		if (!mHiddingResult) {
+		if (mResultContent.getVisibility() != View.GONE) {
+			
 			hideResult();
 			this.mLblCurrentPressure.setText(mPressureInitValue);
 		}
@@ -297,8 +298,9 @@ public class MainActivity extends Activity {
 		Animation translateAnimation = new TranslateAnimation(0.0f, 0.0f, 0.0f,
 				800.0f);
 		translateAnimation.setDuration(1500);
+		mResultContent.setVisibility(View.GONE); 
 		mResultContent.startAnimation(translateAnimation);
-		mResultContent.setVisibility(View.GONE);
+		
 	}
 
 	@Override
