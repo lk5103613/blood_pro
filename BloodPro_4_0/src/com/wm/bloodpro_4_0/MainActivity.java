@@ -84,51 +84,7 @@ public class MainActivity extends Activity {
 	private final String mPressureInitValue = "000";
 	private boolean mHiddingResult = false;
 	private Handler mHandler;
-
-	@Override
-	protected void onResume() {
-		super.onResume();
-		// 如果设备蓝牙是关闭状态，请求打开
-		requestBluetooth();
-		registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
-		registerReceiver(mBleStateReceiver, makeBleStateIntentFilter());
-		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-				WindowManager.LayoutParams.FLAG_FULLSCREEN);
-		if (mBluetoothLeService != null) {
-			// 尝试连接BLE设备
-			mBluetoothLeService.connect(mDeviceAddress);
-			
-			mHandler.postDelayed(new Runnable() {
-				@Override
-				public void run() {
-					if(isConnecting()) {
-						mBluetoothLeService.disconnect();
-						String remindStr = getResources().getString(
-								R.string.connect_timeout);
-						Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
-					}
-				}
-			}, 10000);
-		}
-	}
-
-	private static IntentFilter makeGattUpdateIntentFilter() {
-		final IntentFilter intentFilter = new IntentFilter();
-		intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
-		intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
-		intentFilter
-				.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
-		intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
-		return intentFilter;
-	}
-
-	private static IntentFilter makeBleStateIntentFilter() {
-		final IntentFilter intentFilter = new IntentFilter();
-		intentFilter
-				.addAction("android.bluetooth.adapter.action.STATE_CHANGED");
-		return intentFilter;
-	}
-
+	
 	@SuppressLint("ClickableViewAccessibility")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -145,13 +101,37 @@ public class MainActivity extends Activity {
 			Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
 			finish();
 		}
-
 		// 绑定蓝牙服务
 		Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
 		bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
-
-		// initvalues();//添加测试数据
-
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		// 如果设备蓝牙是关闭状态，请求打开
+		requestBluetooth();
+		registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
+		registerReceiver(mBleStateReceiver, makeBleStateIntentFilter());
+		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+				WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		if (mBluetoothLeService != null && mDeviceAddress != null) {
+			// 尝试连接BLE设备
+			mBluetoothLeService.connect(mDeviceAddress);
+			// 超过10秒钟无响应后认定连接超时
+			mHandler.postDelayed(new Runnable() {
+				@Override
+				public void run() {
+					if(isConnecting()) {
+						mBluetoothLeService.disconnect();
+						mImgConnect.setImageResource(R.drawable.ic_unconnect);
+						String remindStr = getResources().getString(
+								R.string.connect_timeout);
+						Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
+					}
+				}
+			}, 10000);
+		}
 	}
 
 	@Override
@@ -160,6 +140,7 @@ public class MainActivity extends Activity {
 		// 暂时离开主界面时，断开与蓝牙的连接
 		unregisterReceiver(mGattUpdateReceiver);
 		unregisterReceiver(mBleStateReceiver);
+		mDeviceAddress = null;
 		if (isConnected())
 			this.mBluetoothLeService.disconnect();
 	}
@@ -216,8 +197,6 @@ public class MainActivity extends Activity {
 			scanFinish();
 		} else {
 			// 点击后开始检测
-			mProgress.spin();
-			mProgress.setText("停止检测");
 			if (!beginDetect()) {
 				// 如果扫描异常，停止扫描
 				scanFinish();
@@ -227,6 +206,8 @@ public class MainActivity extends Activity {
 
 	// 开始检测
 	private boolean beginDetect() {
+		mProgress.spin();
+		mProgress.setText("停止检测");
 		if (mInforCharacteristic == null) {
 			// 包含数据的characteristic为空，检测失败
 			return false;
@@ -362,11 +343,6 @@ public class MainActivity extends Activity {
 				// 用户选择设备后，获取设备的address
 				mDeviceAddress = data.getExtras().getString(
 						DeviceListActivity.DEVICE_ADDRESS);
-			} else {
-				// 用户没有选择设备，提示用户选择设备连接
-				String str = getResources().getString(
-						R.string.connect_device_first);
-				Toast.makeText(mContext, str, Toast.LENGTH_LONG).show();
 			}
 		}
 	}
@@ -435,6 +411,23 @@ public class MainActivity extends Activity {
 		}
 
 	};
+	
+	private static IntentFilter makeGattUpdateIntentFilter() {
+		final IntentFilter intentFilter = new IntentFilter();
+		intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
+		intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
+		intentFilter
+				.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
+		intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
+		return intentFilter;
+	}
+
+	private static IntentFilter makeBleStateIntentFilter() {
+		final IntentFilter intentFilter = new IntentFilter();
+		intentFilter
+				.addAction("android.bluetooth.adapter.action.STATE_CHANGED");
+		return intentFilter;
+	}
 
 	// 计算Pressure值
 	private String getPressureValue(String data) {
