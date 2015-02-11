@@ -189,7 +189,7 @@ public class BloodHistoryActivity extends ActionBarActivity {
 		mLineChart.setDragEnabled(true);
 		mLineChart.setSaveEnabled(true);
 		mLineChart.setStartAtZero(false);
-		mLineChart.setScaleMinima(list.size() / 10, 1);// 设置缩放比例
+		mLineChart.setScaleMinima(list.size() / 7, 1);// 设置缩放比例
 		
 		mLineChart.setDrawBorder(true);
 		mLineChart.setBorderPositions(new BorderPosition[] {
