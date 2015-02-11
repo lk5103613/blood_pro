@@ -115,6 +115,7 @@ public class MainActivity extends Activity {
 		registerReceiver(mBleStateReceiver, makeBleStateIntentFilter());
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 				WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		
 		if (mBluetoothLeService != null && mDeviceAddress != null) {
 			// 尝试连接BLE设备
 			mBluetoothLeService.connect(mDeviceAddress);
@@ -124,7 +125,6 @@ public class MainActivity extends Activity {
 				public void run() {
 					if(isConnecting()) {
 						mBluetoothLeService.disconnect();
-						mImgConnect.setImageResource(R.drawable.ic_unconnect);
 						String remindStr = getResources().getString(
 								R.string.connect_timeout);
 						Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
@@ -141,6 +141,7 @@ public class MainActivity extends Activity {
 		unregisterReceiver(mGattUpdateReceiver);
 		unregisterReceiver(mBleStateReceiver);
 		mDeviceAddress = null;
+		mImgConnect.setImageResource(R.drawable.ic_unconnect);
 		if (isConnected())
 			this.mBluetoothLeService.disconnect();
 	}
@@ -292,7 +293,7 @@ public class MainActivity extends Activity {
 			public void run() {
 				mHiddingResult = false;
 			}
-		}, 1550);
+		}, 2000);
 		Animation translateAnimation = new TranslateAnimation(0.0f, 0.0f, 0.0f,
 				800.0f);
 		translateAnimation.setDuration(1500);
