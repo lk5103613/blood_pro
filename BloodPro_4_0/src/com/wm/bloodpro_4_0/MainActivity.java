@@ -250,10 +250,7 @@ public class MainActivity extends Activity {
 					.getString(R.string.connect_broken);
 			Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
 		} else {
-			mDeviceAddress = null;
-			mImgConnect.setImageResource(R.drawable.ic_unconnect);
-			if (isConnected())
-				this.mBluetoothLeService.disconnect();
+			leave();
 			Intent intent = new Intent(mContext, DeviceListActivity.class);
 			startActivityForResult(intent, REQUEST_GET_DEVICE);
 		}
@@ -267,7 +264,7 @@ public class MainActivity extends Activity {
 			Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show();
 			return;
 		}
-		scanFinish();
+		leave();
 		Intent intent = new Intent(mContext, BloodHistoryActivity.class);
 		startActivity(intent);
 	}
@@ -457,6 +454,14 @@ public class MainActivity extends Activity {
 		if (!mNeedNewData) {
 			scanFinish();
 		}
+	}
+	
+	private void leave() {
+		scanFinish();
+		mDeviceAddress = null;
+		mImgConnect.setImageResource(R.drawable.ic_unconnect);
+		if (isConnected())
+			this.mBluetoothLeService.disconnect();
 	}
 
 	// 如果正在连接返回true，否则返回false
