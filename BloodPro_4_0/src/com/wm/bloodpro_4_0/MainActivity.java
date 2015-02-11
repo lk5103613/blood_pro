@@ -82,7 +82,6 @@ public class MainActivity extends Activity {
 	private BluetoothGattCharacteristic mNotifyCharacteristic = null;
 	private BluetoothGattCharacteristic mInforCharacteristic = null;
 	private final String mPressureInitValue = "000";
-	private boolean mHiddingResult = false;
 	private Handler mHandler;
 	
 	@SuppressLint("ClickableViewAccessibility")
@@ -140,12 +139,8 @@ public class MainActivity extends Activity {
 		// 暂时离开主界面时，断开与蓝牙的连接
 		unregisterReceiver(mGattUpdateReceiver);
 		unregisterReceiver(mBleStateReceiver);
-		mDeviceAddress = null;
-		mImgConnect.setImageResource(R.drawable.ic_unconnect);
-		if (isConnected())
-			this.mBluetoothLeService.disconnect();
 	}
-
+	
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
@@ -231,7 +226,7 @@ public class MainActivity extends Activity {
 
 	@OnClick(R.id.btn_detect_again)
 	public void detectAgain(View v) {
-		if (!mHiddingResult) {
+		if (mResultContent.getVisibility() != View.GONE) {
 			hideResult();
 			this.mLblCurrentPressure.setText(mPressureInitValue);
 		}
@@ -255,6 +250,10 @@ public class MainActivity extends Activity {
 					.getString(R.string.connect_broken);
 			Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
 		} else {
+			mDeviceAddress = null;
+			mImgConnect.setImageResource(R.drawable.ic_unconnect);
+			if (isConnected())
+				this.mBluetoothLeService.disconnect();
 			Intent intent = new Intent(mContext, DeviceListActivity.class);
 			startActivityForResult(intent, REQUEST_GET_DEVICE);
 		}
@@ -287,13 +286,6 @@ public class MainActivity extends Activity {
 
 	// 隐藏展示结果
 	private void hideResult() {
-		mHiddingResult = true;
-		mHandler.postDelayed(new Runnable() {
-			@Override
-			public void run() {
-				mHiddingResult = false;
-			}
-		}, 2000);
 		Animation translateAnimation = new TranslateAnimation(0.0f, 0.0f, 0.0f,
 				800.0f);
 		translateAnimation.setDuration(1500);
