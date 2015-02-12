@@ -249,7 +249,7 @@
         </LinearLayout>
 
         <Button
-            android:id="@+id/btn_detect_again"
+            android:id="@+id/result_btn_history"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/main_btn_bg"
