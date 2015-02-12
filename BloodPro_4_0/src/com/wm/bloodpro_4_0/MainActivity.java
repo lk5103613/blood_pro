@@ -336,7 +336,9 @@ public class MainActivity extends Activity {
 				String remindStr = getResources().getString(
 						R.string.remind_ble_must_open);
 				Toast.makeText(mContext, remindStr, Toast.LENGTH_SHORT).show();
+				mDeviceAddress = null;
 				finish();
+				System.exit(0);
 			} else {
 				beginScan();
 			}
@@ -364,12 +366,15 @@ public class MainActivity extends Activity {
 	private ScanCallback mCallback = new ScanCallback() {
 		@Override
 		public void onScanSuccess(BluetoothDevice device) {
+			System.out.println("on scan success");
 			if(mDeviceAddress != null) {
+				System.out.println("mdevice address is not null");
 				return;
 			}
 			mDeviceAddress = device.getAddress();
 			// 扫描设备成功后，开始连接
 			if (mBluetoothLeService != null) {
+				System.out.println("m bluetoothleservice is not null");
 				new Thread(new Runnable() {
 					@Override
 					public void run() {
