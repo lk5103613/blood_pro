@@ -69,8 +69,6 @@ public class BluetoothLeService extends Service {
 		public void onServicesDiscovered(BluetoothGatt gatt, int status) {
 			if (status == BluetoothGatt.GATT_SUCCESS) {
 				broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
-			} else {
-				System.out.println("onServicesDiscovered received: " + status);
 			}
 		};
 		
@@ -177,7 +175,6 @@ public class BluetoothLeService extends Service {
 				&& address.equals(mBluetoothDeviceAddress)
 				&& mBluetoothGatt != null) {
 			if (mBluetoothGatt.connect()) {
-				System.out.println("this");
 				mConnectionState = STATE_CONNECTING;
 				return true;
 			} else {

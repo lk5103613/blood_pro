@@ -120,7 +120,8 @@ public class MainActivity extends Activity {
 			finish();
 		}
 		// 开始扫描
-		beginScan();
+		if(isBluetoothOpen())
+			beginScan();
 		// 绑定蓝牙服务
 		Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
 		bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
@@ -147,11 +148,6 @@ public class MainActivity extends Activity {
 		registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 		registerReceiver(mBleStateReceiver, makeBleStateIntentFilter());
 	}
-	
-	@Override
-	protected void onRestart() {
-		super.onRestart();
-	}
 
 	@Override
 	protected void onPause() {
@@ -175,6 +171,7 @@ public class MainActivity extends Activity {
 	// 使界面控件回复初始状态
 	private void reset() {
 		scanFinish();
+		hideResult();
 		mRetryTime = 0;
 		mDeviceAddress = null;
 		mImgConnect.setBackgroundResource(R.drawable.ic_unconnect);
@@ -191,10 +188,18 @@ public class MainActivity extends Activity {
 		}
 		return true;
 	}
+	
+	/**
+	 * 判断蓝牙是否开启
+	 * @return 开启返回true，否则返回false
+	 */
+	private boolean isBluetoothOpen() {
+		return !(mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled());
+	}
 
 	// 请求打开蓝牙
 	private void requestBluetooth() {
-		if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
+		if (!isBluetoothOpen()) {
 			Intent enableBtIntent = new Intent(
 					BluetoothAdapter.ACTION_REQUEST_ENABLE);
 			startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
@@ -331,6 +336,8 @@ public class MainActivity extends Activity {
 						R.string.remind_ble_must_open);
 				Toast.makeText(mContext, remindStr, Toast.LENGTH_SHORT).show();
 				finish();
+			} else {
+				beginScan();
 			}
 		}
 	}
@@ -356,6 +363,9 @@ public class MainActivity extends Activity {
 	private ScanCallback mCallback = new ScanCallback() {
 		@Override
 		public void onScanSuccess(BluetoothDevice device) {
+			if(mDeviceAddress != null) {
+				return;
+			}
 			mDeviceAddress = device.getAddress();
 			// 扫描设备成功后，开始连接
 			if (mBluetoothLeService != null) {
@@ -363,17 +373,17 @@ public class MainActivity extends Activity {
 					@Override
 					public void run() {
 						mBluetoothLeService.connect(mDeviceAddress);
+						// 超过时间无响应后认定连接超时
+						mHandler.postDelayed(new Runnable() {
+							@Override
+							public void run() {
+								if (isConnecting()) {
+									handleConnectFail();
+								}
+							}
+						}, CONNECT_TIME);
 					}
 				}).start();
-				// 超过时间无响应后认定连接超时
-				mHandler.postDelayed(new Runnable() {
-					@Override
-					public void run() {
-						if (isConnecting()) {
-							handleConnectFail();
-						}
-					}
-				}, CONNECT_TIME);
 			}
 		}
 

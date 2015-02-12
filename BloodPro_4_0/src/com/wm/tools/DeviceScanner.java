@@ -15,8 +15,6 @@ public class DeviceScanner {
 	// 扫描时间，超过这个时间没有扫描到设备，认定扫描失败
 	private final static int SCAN_PERIOD = 8000;
 	private static DeviceScanner mDeviceScanner = null;
-	// 血压计的设备名称
-	private final static String BLOOD_PRESSURE_NAME = "simplebleperipheral";
 	// 存放扫描到的设备
 	private BluetoothDevice mDevice = null;
 	private Handler mHandler = null;
@@ -57,6 +55,8 @@ public class DeviceScanner {
 	@SuppressWarnings("deprecation")
 	public void scanLeDevice(final boolean enable) {
 		if (enable) {
+			if(mScanning)
+				return;
 			mDevice = null;
 			mCallback.onScanStateChange(STATE_BEGIN_SCAN);
 			// 在指定时间之后停止扫描
@@ -91,6 +91,7 @@ public class DeviceScanner {
 
 	/**
 	 * 用于判断扫描到的设备是否是血压计
+	 * 根据蓝牙名称判断是否为血压计
 	 * 
 	 * @param device
 	 *            扫描到的设备
@@ -98,7 +99,7 @@ public class DeviceScanner {
 	 */
 	public boolean isBloodPressure(BluetoothDevice device) {
 		if (device.getName().toLowerCase(Locale.getDefault())
-				.equals(BLOOD_PRESSURE_NAME)) {
+				.contains("ble")) {
 			return true;
 		}
 		return false;
