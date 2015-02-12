@@ -264,7 +264,7 @@ public class MainActivity extends Activity {
 		mNotifyCharacteristic = null;
 	}
 
-	@OnClick({R.id.btn_history, R.id.btn_detect_again})
+	@OnClick({R.id.btn_history, R.id.result_btn_history})
 	public void showHistory(View v) {
 		hideResult();
 		this.mLblCurrentPressure.setText(mPressureInitValue);
