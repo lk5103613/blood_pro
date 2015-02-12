@@ -359,7 +359,12 @@ public class MainActivity extends Activity {
 			mDeviceAddress = device.getAddress();
 			// 扫描设备成功后，开始连接
 			if (mBluetoothLeService != null) {
-				mBluetoothLeService.connect(mDeviceAddress);
+				new Thread(new Runnable() {
+					@Override
+					public void run() {
+						mBluetoothLeService.connect(mDeviceAddress);
+					}
+				}).start();
 				// 超过时间无响应后认定连接超时
 				mHandler.postDelayed(new Runnable() {
 					@Override
