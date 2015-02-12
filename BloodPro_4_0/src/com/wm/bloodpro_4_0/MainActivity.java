@@ -1,5 +1,6 @@
 package com.wm.bloodpro_4_0;
 
+import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 
@@ -103,6 +104,9 @@ public class MainActivity extends Activity {
 		// 绑定蓝牙服务
 		Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
 		bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+		
+		initvalues();//test
+		
 	}
 	
 	@Override
@@ -200,6 +204,7 @@ public class MainActivity extends Activity {
 				scanFinish();
 			}
 		}
+		
 	}
 
 	// 开始检测
@@ -226,11 +231,21 @@ public class MainActivity extends Activity {
 		mNotifyCharacteristic = null;
 	}
 
-	@OnClick(R.id.btn_detect_again)
+	@OnClick(R.id.result_btn_history)
 	public void detectAgain(View v) {
 		if (mResultContent.getVisibility() != View.GONE) {
 			hideResult();
 			this.mLblCurrentPressure.setText(mPressureInitValue);
+			List<BloodInfo> infos = new DBService(mContext).getAllModle();
+			if (infos == null || infos.size() == 0) {
+				String msg = getResources().getString(R.string.no_history_data);
+				Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show();
+				return;
+			}
+			leave();
+			Intent intent = new Intent(mContext, BloodHistoryActivity.class);
+			startActivity(intent);
+			
 		}
 	}
 
@@ -480,6 +495,26 @@ public class MainActivity extends Activity {
 			return false;
 		}
 		return this.mBluetoothLeService.getConnectState() == BluetoothLeService.STATE_CONNECTED;
+	}
+	
+	private void initvalues() {
+		DBService dbService = new DBService(MainActivity.this);
+		BloodInfo bloodInfo = new BloodInfo();
+		for (int i = 0; i < 3; i++) {
+			double d = Math.random() * 80 + 70;
+			bloodInfo.setHeartRate((d + "").substring(0, (d + "").indexOf(".")));
+			double d1 = Math.random() * 80 + 70;
+			bloodInfo
+					.setSystolic((d1 + "").substring(0, (d1 + "").indexOf(".")));
+			double d2 = Math.random() * 80 + 70;
+			bloodInfo
+					.setDiastolic((d2 + "").substring(0, (d2 + "").indexOf(".")));
+			Calendar nowss = Calendar.getInstance();
+			String datestr = nowss.get(Calendar.MONTH) + 1 + "."
+					+ nowss.get(Calendar.DAY_OF_MONTH);
+			bloodInfo.setDate(datestr);
+			long l = dbService.insertModleData(bloodInfo);
+		}
 	}
 
 }
