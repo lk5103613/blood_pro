@@ -130,6 +130,7 @@ public class MainActivity extends Activity {
 	// 开始扫描
 	private void beginScan() {
 		// 开始扫描设备
+		mDeviceAddress = null;
 		mScanner.scanLeDevice(true);
 		mCurrentState = STATE_CONNECTING;
 		// 开始正在连接的闪烁动画，并给出提示
@@ -373,17 +374,18 @@ public class MainActivity extends Activity {
 					@Override
 					public void run() {
 						mBluetoothLeService.connect(mDeviceAddress);
-						// 超过时间无响应后认定连接超时
-						mHandler.postDelayed(new Runnable() {
-							@Override
-							public void run() {
-								if (isConnecting()) {
-									handleConnectFail();
-								}
-							}
-						}, CONNECT_TIME);
+						
 					}
 				}).start();
+				// 超过时间无响应后认定连接超时
+				mHandler.postDelayed(new Runnable() {
+					@Override
+					public void run() {
+						if (isConnecting()) {
+							handleConnectFail();
+						}
+					}
+				}, CONNECT_TIME);
 			}
 		}
 
@@ -458,6 +460,7 @@ public class MainActivity extends Activity {
 	private void reconnect() {
 		mRetryTime += 1;
 		mBluetoothLeService.disconnect();
+		mDeviceAddress = null;
 		mScanner.scanLeDevice(true);
 	}
 
