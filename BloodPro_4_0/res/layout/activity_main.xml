@@ -32,8 +32,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
-                android:contentDescription="@string/unconnect_description"
-                android:src="@drawable/ic_unconnect" />
+                android:contentDescription="@string/unconnect_description" />
+            
         </RelativeLayout>
     </android.support.v7.widget.Toolbar>
 

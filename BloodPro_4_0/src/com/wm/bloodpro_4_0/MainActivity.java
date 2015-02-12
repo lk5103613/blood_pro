@@ -1,12 +1,12 @@
 package com.wm.bloodpro_4_0;
 
-import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
@@ -17,6 +17,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -36,6 +37,8 @@ import com.wm.db.BloodInfo;
 import com.wm.db.DBService;
 import com.wm.task.InsertResultTask;
 import com.wm.tools.DataConvertUtils;
+import com.wm.tools.DeviceScanner;
+import com.wm.tools.DeviceScanner.ScanCallback;
 import com.wm.tools.ProgressWheel;
 import com.wm.tools.Uuids;
 import com.wn.entity.ResultException;
@@ -50,12 +53,13 @@ import com.wn.entity.ResultInfo;
  */
 public class MainActivity extends Activity {
 
-	public static String TAG = "test";
-
 	// request code to open bluetooth
 	public static int REQUEST_ENABLE_BT = 1;
-	// request code of connect device
-	public static int REQUEST_GET_DEVICE = 2;
+
+	// 连接设备的最长时间
+	private static final int CONNECT_TIME = 10000;
+	// 最多重连次数
+	private static final int MAX_RETRY_TIME = 5;
 
 	@InjectView(R.id.progress_bar)
 	ProgressWheel mProgress;
@@ -71,6 +75,10 @@ public class MainActivity extends Activity {
 	TextView mLblDiastolic;
 	@InjectView(R.id.lbl_current_pressure)
 	TextView mLblCurrentPressure;
+	
+	private final static int STATE_CONNECTED = 0;
+	private final static int STATE_DISCONNECTED = 1;
+	private final static int STATE_CONNECTING = 2;
 
 	private Context mContext;
 	private BluetoothAdapter mBluetoothAdapter;
@@ -84,16 +92,26 @@ public class MainActivity extends Activity {
 	private BluetoothGattCharacteristic mInforCharacteristic = null;
 	private final String mPressureInitValue = "000";
 	private Handler mHandler;
-	
+	private DeviceScanner mScanner;
+	private int mRetryTime = 0;
+	private AnimationDrawable mFlashing = null;
+	private int mCurrentState = STATE_DISCONNECTED;
+
 	@SuppressLint("ClickableViewAccessibility")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+				WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		setContentView(R.layout.activity_main);
 		ButterKnife.inject(this);
 		// 初始化参数
 		mContext = MainActivity.this;
 		mHandler = new Handler();
+		BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+		mBluetoothAdapter = bluetoothManager.getAdapter();
+		mScanner = DeviceScanner.getInstance(mBluetoothAdapter, mCallback);
+		mFlashing = (AnimationDrawable) getResources().getDrawable(R.drawable.connect_flashing);
 		// 如果设备不支持BLE，提示并关闭应用
 		if (!checkSupport()) {
 			String remindStr = getResources().getString(
@@ -101,42 +119,38 @@ public class MainActivity extends Activity {
 			Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
 			finish();
 		}
+		// 开始扫描
+		beginScan();
 		// 绑定蓝牙服务
 		Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
 		bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
-		
-		initvalues();//test
-		
 	}
 	
+	// 开始扫描
+	private void beginScan() {
+		// 开始扫描设备
+		mScanner.scanLeDevice(true);
+		mCurrentState = STATE_CONNECTING;
+		// 开始正在连接的闪烁动画，并给出提示
+		mImgConnect.setBackground(mFlashing);
+		mFlashing.start();
+		String msg = getResources().getString(R.string.scan_and_connect);
+		Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show();
+	}
+
 	@Override
 	protected void onResume() {
 		super.onResume();
 		// 如果设备蓝牙是关闭状态，请求打开
 		requestBluetooth();
+		// 注册广播接受者
 		registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 		registerReceiver(mBleStateReceiver, makeBleStateIntentFilter());
-		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-				WindowManager.LayoutParams.FLAG_FULLSCREEN);
-		if(isConnected()) {
-			return;
-		}
-		if (mBluetoothLeService != null && mDeviceAddress != null) {
-			// 尝试连接BLE设备
-			mBluetoothLeService.connect(mDeviceAddress);
-			// 超过10秒钟无响应后认定连接超时
-			mHandler.postDelayed(new Runnable() {
-				@Override
-				public void run() {
-					if(isConnecting()) {
-						mBluetoothLeService.disconnect();
-						String remindStr = getResources().getString(
-								R.string.connect_timeout);
-						Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
-					}
-				}
-			}, 10000);
-		}
+	}
+	
+	@Override
+	protected void onRestart() {
+		super.onRestart();
 	}
 
 	@Override
@@ -146,13 +160,27 @@ public class MainActivity extends Activity {
 		unregisterReceiver(mGattUpdateReceiver);
 		unregisterReceiver(mBleStateReceiver);
 	}
-	
+
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		if (mBluetoothLeService != null && mServiceConnection != null)
+		if (mBluetoothLeService != null && mServiceConnection != null) {
+			if (isConnected())
+				this.mBluetoothLeService.disconnect();
 			unbindService(mServiceConnection);
+		}
 		mBluetoothLeService = null;
+	}
+	
+	// 使界面控件回复初始状态
+	private void reset() {
+		scanFinish();
+		mRetryTime = 0;
+		mDeviceAddress = null;
+		mImgConnect.setBackgroundResource(R.drawable.ic_unconnect);
+		if(mFlashing != null) 
+			mFlashing.stop();
+		mLblCurrentPressure.setText(mPressureInitValue);
 	}
 
 	// 检查设备是否支持BLE
@@ -166,8 +194,6 @@ public class MainActivity extends Activity {
 
 	// 请求打开蓝牙
 	private void requestBluetooth() {
-		final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-		mBluetoothAdapter = bluetoothManager.getAdapter();
 		if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
 			Intent enableBtIntent = new Intent(
 					BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -182,12 +208,12 @@ public class MainActivity extends Activity {
 			hideResult();
 		}
 		// 如果正在连接，显示正在连接，请耐心等待
-		if (isConnecting()) {
+		if (mCurrentState == STATE_CONNECTING) {
 			String msg = getResources().getString(R.string.connecting_now);
 			Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show();
 			return;
 		}
-		if (!isConnected()) {
+		if (mCurrentState != STATE_CONNECTED) {
 			// 如果没有设备连接，提示请选择设备连接
 			String msg = getResources()
 					.getString(R.string.connect_device_first);
@@ -204,7 +230,14 @@ public class MainActivity extends Activity {
 				scanFinish();
 			}
 		}
-		
+	}
+	
+	@OnClick(R.id.img_connect)
+	public void reconnect(View v) {
+		// 如果是连接失败状态，点击后重新扫描并连接
+		if(mCurrentState != STATE_DISCONNECTED)
+			return;
+		beginScan();
 	}
 
 	// 开始检测
@@ -231,57 +264,16 @@ public class MainActivity extends Activity {
 		mNotifyCharacteristic = null;
 	}
 
-	@OnClick(R.id.result_btn_history)
-	public void detectAgain(View v) {
-		if (mResultContent.getVisibility() != View.GONE) {
-			hideResult();
-			this.mLblCurrentPressure.setText(mPressureInitValue);
-			List<BloodInfo> infos = new DBService(mContext).getAllModle();
-			if (infos == null || infos.size() == 0) {
-				String msg = getResources().getString(R.string.no_history_data);
-				Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show();
-				return;
-			}
-			leave();
-			Intent intent = new Intent(mContext, BloodHistoryActivity.class);
-			startActivity(intent);
-			
-		}
-	}
-
-	@OnClick(R.id.img_connect)
-	public void showDeviceList(View v) {
-		if (this.mResultContent.getVisibility() == View.VISIBLE) {
-			hideResult();
-		}
-		if (isConnecting()) {
-			String msg = getResources().getString(R.string.connecting_now);
-			Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show();
-			return;
-		}
-		if (isConnected()) {
-			scanFinish();
-			this.mLblCurrentPressure.setText(mPressureInitValue);
-			this.mBluetoothLeService.disconnect();
-			String remindStr = getResources()
-					.getString(R.string.connect_broken);
-			Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
-		} else {
-			leave();
-			Intent intent = new Intent(mContext, DeviceListActivity.class);
-			startActivityForResult(intent, REQUEST_GET_DEVICE);
-		}
-	}
-
-	@OnClick(R.id.btn_history)
+	@OnClick({R.id.btn_history, R.id.btn_detect_again})
 	public void showHistory(View v) {
+		hideResult();
+		this.mLblCurrentPressure.setText(mPressureInitValue);
 		List<BloodInfo> infos = new DBService(mContext).getAllModle();
 		if (infos == null || infos.size() == 0) {
 			String msg = getResources().getString(R.string.no_history_data);
 			Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show();
 			return;
 		}
-		leave();
 		Intent intent = new Intent(mContext, BloodHistoryActivity.class);
 		startActivity(intent);
 	}
@@ -300,10 +292,6 @@ public class MainActivity extends Activity {
 
 	// 隐藏展示结果
 	private void hideResult() {
-		Animation translateAnimation = new TranslateAnimation(0.0f, 0.0f, 0.0f,
-				800.0f);
-		translateAnimation.setDuration(1500);
-		mResultContent.startAnimation(translateAnimation);
 		mResultContent.setVisibility(View.GONE);
 	}
 
@@ -345,13 +333,6 @@ public class MainActivity extends Activity {
 				finish();
 			}
 		}
-		if (requestCode == REQUEST_GET_DEVICE) {
-			if (resultCode == RESULT_OK) {
-				// 用户选择设备后，获取设备的address
-				mDeviceAddress = data.getExtras().getString(
-						DeviceListActivity.DEVICE_ADDRESS);
-			}
-		}
 	}
 
 	private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -364,12 +345,44 @@ public class MainActivity extends Activity {
 			if (!mBluetoothLeService.initialize()) {
 				finish();
 			}
-			mBluetoothLeService.connect(mDeviceAddress);
 		}
 
 		@Override
 		public void onServiceDisconnected(ComponentName componentName) {
 			mBluetoothLeService = null;
+		}
+	};
+
+	private ScanCallback mCallback = new ScanCallback() {
+		@Override
+		public void onScanSuccess(BluetoothDevice device) {
+			mDeviceAddress = device.getAddress();
+			// 扫描设备成功后，开始连接
+			if (mBluetoothLeService != null) {
+				mBluetoothLeService.connect(mDeviceAddress);
+				// 超过时间无响应后认定连接超时
+				mHandler.postDelayed(new Runnable() {
+					@Override
+					public void run() {
+						if (isConnecting()) {
+							handleConnectFail();
+						}
+					}
+				}, CONNECT_TIME);
+			}
+		}
+
+		@Override
+		public void onScanFailed() {
+			mCurrentState = STATE_DISCONNECTED;
+			reset();
+			String msg = getResources().getString(R.string.scan_failed);
+			Toast.makeText(mContext, msg, Toast.LENGTH_LONG).show();
+		}
+
+		@Override
+		public void onScanStateChange(int scanState) {
+
 		}
 	};
 
@@ -379,18 +392,19 @@ public class MainActivity extends Activity {
 			final String action = intent.getAction();
 			if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
 				// 连接成功后，提示用户连接成功
-				mImgConnect.setImageResource(R.drawable.ic_connected);
-				String remindStr = getResources().getString(
-						R.string.connect_success);
-				Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
+				mRetryTime = 0;
+				if(mCurrentState != STATE_CONNECTED) {
+					mImgConnect.setBackgroundResource(R.drawable.ic_connected);
+					mFlashing.stop();
+					String remindStr = getResources().getString(
+							R.string.connect_success);
+					Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
+				}
+				mCurrentState = STATE_CONNECTED;
 			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED
 					.equals(action)) {
-				// 连接断开，提示用户连接断开
-				mImgConnect.setImageResource(R.drawable.ic_unconnect);
-				scanFinish();
-				String remindStr = getResources().getString(
-						R.string.connect_broken);
-				Toast.makeText(mContext, remindStr, Toast.LENGTH_LONG).show();
+				// 连接断开，重试
+				handleConnectFail();
 			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED
 					.equals(action)) {
 				BluetoothGattService service = mBluetoothLeService
@@ -409,6 +423,29 @@ public class MainActivity extends Activity {
 		}
 	};
 
+	// 处理连接失败的情况，如果超过重试次数，判定连接失败，否则重新连接
+	private void handleConnectFail() {
+		if (mRetryTime >= MAX_RETRY_TIME)
+			handleRetryOvertime();
+		else
+			reconnect();
+	}
+
+	// 当连接重试次数到达后所做处理
+	private void handleRetryOvertime() {
+		reset();
+		mCurrentState = STATE_DISCONNECTED;
+		String msg = getResources().getString(R.string.connect_failed);
+		Toast.makeText(mContext, msg, Toast.LENGTH_LONG).show();
+	}
+
+	// 重新连接
+	private void reconnect() {
+		mRetryTime += 1;
+		mBluetoothLeService.disconnect();
+		mScanner.scanLeDevice(true);
+	}
+
 	// 监听手机蓝牙状态，如果中途关闭蓝牙，再次请求
 	private final BroadcastReceiver mBleStateReceiver = new BroadcastReceiver() {
 		@Override
@@ -416,7 +453,7 @@ public class MainActivity extends Activity {
 			requestBluetooth();
 		}
 	};
-	
+
 	private static IntentFilter makeGattUpdateIntentFilter() {
 		final IntentFilter intentFilter = new IntentFilter();
 		intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
@@ -470,51 +507,21 @@ public class MainActivity extends Activity {
 			scanFinish();
 		}
 	}
-	
-	// 当从此activity跳转到其他activity时执行
-	private void leave() {
-		scanFinish();
-		mDeviceAddress = null;
-		mImgConnect.setImageResource(R.drawable.ic_unconnect);
-		mLblCurrentPressure.setText(mPressureInitValue);
-		if (isConnected())
-			this.mBluetoothLeService.disconnect();
-	}
 
 	// 如果正在连接返回true，否则返回false
 	private boolean isConnecting() {
-		if(this.mBluetoothLeService == null) {
+		if (this.mBluetoothLeService == null) {
 			return false;
 		}
 		return this.mBluetoothLeService.getConnectState() == BluetoothLeService.STATE_CONNECTING;
 	}
-	
+
 	// 如果当前状态为已连接，返回true，否则返回false
 	private boolean isConnected() {
-		if(this.mBluetoothLeService == null) {
+		if (this.mBluetoothLeService == null) {
 			return false;
 		}
 		return this.mBluetoothLeService.getConnectState() == BluetoothLeService.STATE_CONNECTED;
-	}
-	
-	private void initvalues() {
-		DBService dbService = new DBService(MainActivity.this);
-		BloodInfo bloodInfo = new BloodInfo();
-		for (int i = 0; i < 3; i++) {
-			double d = Math.random() * 80 + 70;
-			bloodInfo.setHeartRate((d + "").substring(0, (d + "").indexOf(".")));
-			double d1 = Math.random() * 80 + 70;
-			bloodInfo
-					.setSystolic((d1 + "").substring(0, (d1 + "").indexOf(".")));
-			double d2 = Math.random() * 80 + 70;
-			bloodInfo
-					.setDiastolic((d2 + "").substring(0, (d2 + "").indexOf(".")));
-			Calendar nowss = Calendar.getInstance();
-			String datestr = nowss.get(Calendar.MONTH) + 1 + "."
-					+ nowss.get(Calendar.DAY_OF_MONTH);
-			bloodInfo.setDate(datestr);
-			long l = dbService.insertModleData(bloodInfo);
-		}
 	}
 
 }
