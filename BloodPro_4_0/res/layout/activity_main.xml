@@ -32,8 +32,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
-                android:contentDescription="@string/unconnect_description"
-                android:src="@drawable/ic_unconnect" />
+                android:contentDescription="@string/unconnect_description" />
+            
         </RelativeLayout>
     </android.support.v7.widget.Toolbar>
 
@@ -254,7 +254,7 @@
             android:layout_height="wrap_content"
             android:background="@drawable/main_btn_bg"
             android:minHeight="48dp"
-            android:text="@string/detect_again"
+            android:text="@string/look_for_history"
             android:textColor="@color/white" />
     </LinearLayout>
 
