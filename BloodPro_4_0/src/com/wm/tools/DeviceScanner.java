@@ -7,6 +7,11 @@ import android.bluetooth.BluetoothAdapter.LeScanCallback;
 import android.bluetooth.BluetoothDevice;
 import android.os.Handler;
 
+/**
+ * 负责扫描的工具类
+ * @author Like
+ *
+ */
 public class DeviceScanner {
 	
 	public final static int STATE_BEGIN_SCAN = 0;
