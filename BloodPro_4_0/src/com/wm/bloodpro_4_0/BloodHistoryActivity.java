@@ -3,7 +3,6 @@ package com.wm.bloodpro_4_0;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
